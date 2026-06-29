@@ -1,0 +1,2 @@
+# DocListen currently uses browser built-in speech synthesis for playback.
+# Keep this file for Render Python service detection.
