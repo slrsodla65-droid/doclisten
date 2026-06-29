@@ -1,4 +1,8 @@
 import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+import {
+  AUTO_SCROLL_USER_PAUSE_MS,
+  shouldAutoScrollReading,
+} from './readerCore.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -30,6 +34,7 @@ const state = {
   activeBlock: null,
   speaking: false,
   paused: false,
+  autoScrollPauseUntilMs: 0,
   renderToken: 0,
   speechRunId: 0,
 };
@@ -134,7 +139,21 @@ function buildBlocks(textItems, viewport, pageNumber) {
   }).filter((block) => block.text);
 }
 
-function setActiveBlock(block) {
+function pauseAutoScrollForUserInput() {
+  if (!state.speaking) return;
+  state.autoScrollPauseUntilMs = Date.now() + AUTO_SCROLL_USER_PAUSE_MS;
+}
+
+function scrollActiveBlockIntoView(node) {
+  if (!node) return;
+  if (!shouldAutoScrollReading({
+    speaking: state.speaking,
+    userPauseUntilMs: state.autoScrollPauseUntilMs,
+  })) return;
+  node.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+}
+
+function setActiveBlock(block, options = {}) {
   state.activeBlock = block || null;
   document.querySelectorAll('.text-block.active').forEach((node) => node.classList.remove('active'));
   if (block) {
@@ -142,6 +161,7 @@ function setActiveBlock(block) {
     node?.classList.add('active');
     els.currentText.textContent = block.text;
     saveProgress(block);
+    if (options.autoScroll) scrollActiveBlockIntoView(node);
   }
   updateControls();
 }
@@ -218,8 +238,10 @@ function speakBlock(block) {
   if (!block?.text) return;
   state.speechRunId += 1;
   const runId = state.speechRunId;
+  state.speaking = true;
+  state.paused = false;
   window.speechSynthesis.cancel();
-  setActiveBlock(block);
+  setActiveBlock(block, { autoScroll: true });
 
   const utterance = new SpeechSynthesisUtterance(block.text);
   utterance.lang = 'ko-KR';
@@ -319,6 +341,14 @@ els.prevPageBtn.addEventListener('click', async () => {
 els.nextPageBtn.addEventListener('click', async () => {
   stopSpeech();
   await renderPage(state.currentPage + 1);
+});
+
+window.addEventListener('wheel', pauseAutoScrollForUserInput, { passive: true });
+window.addEventListener('touchmove', pauseAutoScrollForUserInput, { passive: true });
+window.addEventListener('keydown', (event) => {
+  if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
+    pauseAutoScrollForUserInput();
+  }
 });
 
 window.addEventListener('beforeunload', () => {

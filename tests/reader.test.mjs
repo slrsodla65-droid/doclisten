@@ -9,6 +9,8 @@ import {
   clampGapSeconds,
   estimateSpeechDurationMs,
   normalizeServerVoices,
+  shouldAutoScrollReading,
+  AUTO_SCROLL_USER_PAUSE_MS,
 } from '../src/readerCore.mjs';
 
 test('buildBlocksFromTextItems groups nearby text items into ordered line blocks', () => {
@@ -89,6 +91,20 @@ test('normalizeServerVoices keeps Korean neural voices first and labels them', (
   assert.equal(voices.length, 2);
   assert.equal(voices[0].value, 'ko-KR-InJoonNeural');
   assert.match(voices[0].label, /한국어 AI/);
+});
+
+test('auto scroll follows reading unless the user recently scrolled manually', () => {
+  const now = 10_000;
+  assert.equal(shouldAutoScrollReading({ speaking: true, nowMs: now, userPauseUntilMs: 0 }), true);
+  assert.equal(
+    shouldAutoScrollReading({ speaking: true, nowMs: now, userPauseUntilMs: now + AUTO_SCROLL_USER_PAUSE_MS }),
+    false,
+  );
+  assert.equal(
+    shouldAutoScrollReading({ speaking: true, nowMs: now + AUTO_SCROLL_USER_PAUSE_MS + 1, userPauseUntilMs: now + AUTO_SCROLL_USER_PAUSE_MS }),
+    true,
+  );
+  assert.equal(shouldAutoScrollReading({ speaking: false, nowMs: now, userPauseUntilMs: 0 }), false);
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {

@@ -1,3 +1,9 @@
+export const AUTO_SCROLL_USER_PAUSE_MS = 8000;
+
+export function shouldAutoScrollReading({ speaking, nowMs = Date.now(), userPauseUntilMs = 0 } = {}) {
+  return Boolean(speaking) && Number(nowMs) >= Number(userPauseUntilMs || 0);
+}
+
 export function clampRate(rate) {
   const n = Number(rate);
   if (Number.isNaN(n)) return 1;
