@@ -16,10 +16,15 @@
 - 이용약관 페이지 추가
 - 파일 처리 정책 페이지 추가
 - 문의 페이지 추가
+- `doclisten.app` 도메인 구매 완료
+- GitHub 비공개 저장소 업로드 완료: https://github.com/slrsodla65-droid/doclisten
+- Render 배포용 설정 파일 준비 완료
 
 ## 정식 공개 전 필요한 항목
-- `doclisten.app` 또는 최종 도메인 구매
-- HTTPS 가능한 서버/호스팅 선택
+- Render Web Service 생성
+- Render 임시 주소 접속 확인
+- Cloudflare DNS를 Render에 연결
+- `https://doclisten.app` HTTPS 접속 확인
 - 공식 문의 이메일 연결: support@도메인
 - 파일 자동 삭제 주기 확정
 - 서버 디스크 용량/캐시 삭제 정책 설정
@@ -33,5 +38,8 @@
 3. 확장 서비스: 프론트/백엔드 분리 + 객체 저장소 + DB + 결제
 
 ## 다음 실행 단계
-- 도메인을 정하면 Nginx HTTPS 배포 설정을 진행한다.
-- 도메인이 없으면 임시로 Cloudflare Tunnel 또는 VPS IP 기반 테스트 공개를 유지한다.
+- 사용자가 Render에서 GitHub 저장소 `doclisten`을 연결해 Web Service를 생성한다.
+- 배포 완료 후 Render 임시 주소를 확인한다.
+- Render의 Custom Domain 메뉴에서 `doclisten.app`과 `www.doclisten.app`을 추가한다.
+- Cloudflare DNS에 Render가 안내한 레코드를 추가한다.
+- 최종적으로 `https://doclisten.app`에서 PDF 업로드/듣기/이어보기를 검증한다.
