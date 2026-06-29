@@ -11,6 +11,7 @@ import {
   normalizeServerVoices,
   shouldAutoScrollReading,
   AUTO_SCROLL_USER_PAUSE_MS,
+  shouldKeepScreenAwake,
 } from '../src/readerCore.mjs';
 
 test('buildBlocksFromTextItems groups nearby text items into ordered line blocks', () => {
@@ -105,6 +106,12 @@ test('auto scroll follows reading unless the user recently scrolled manually', (
     true,
   );
   assert.equal(shouldAutoScrollReading({ speaking: false, nowMs: now, userPauseUntilMs: 0 }), false);
+});
+
+test('screen wake lock is needed only while actively listening', () => {
+  assert.equal(shouldKeepScreenAwake({ speaking: true, paused: false }), true);
+  assert.equal(shouldKeepScreenAwake({ speaking: true, paused: true }), false);
+  assert.equal(shouldKeepScreenAwake({ speaking: false, paused: false }), false);
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {

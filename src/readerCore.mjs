@@ -1,5 +1,9 @@
 export const AUTO_SCROLL_USER_PAUSE_MS = 8000;
 
+export function shouldKeepScreenAwake({ speaking, paused } = {}) {
+  return Boolean(speaking) && !Boolean(paused);
+}
+
 export function shouldAutoScrollReading({ speaking, nowMs = Date.now(), userPauseUntilMs = 0 } = {}) {
   return Boolean(speaking) && Number(nowMs) >= Number(userPauseUntilMs || 0);
 }

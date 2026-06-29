@@ -2,6 +2,7 @@ import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38
 import {
   AUTO_SCROLL_USER_PAUSE_MS,
   shouldAutoScrollReading,
+  shouldKeepScreenAwake,
 } from './readerCore.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
@@ -35,6 +36,7 @@ const state = {
   speaking: false,
   paused: false,
   autoScrollPauseUntilMs: 0,
+  wakeLock: null,
   renderToken: 0,
   speechRunId: 0,
 };
@@ -73,7 +75,35 @@ function stopSpeech() {
   updateControls();
 }
 
+async function syncWakeLock() {
+  const shouldHold = shouldKeepScreenAwake({ speaking: state.speaking, paused: state.paused });
+  if (!shouldHold) {
+    if (state.wakeLock) {
+      try {
+        await state.wakeLock.release();
+      } catch (error) {
+        console.debug('Wake Lock release failed', error);
+      }
+      state.wakeLock = null;
+    }
+    return;
+  }
+
+  if (state.wakeLock || document.visibilityState !== 'visible') return;
+  if (!('wakeLock' in navigator) || !navigator.wakeLock?.request) return;
+  try {
+    state.wakeLock = await navigator.wakeLock.request('screen');
+    state.wakeLock.addEventListener?.('release', () => {
+      state.wakeLock = null;
+    });
+  } catch (error) {
+    console.debug('Screen Wake Lock is unavailable', error);
+    state.wakeLock = null;
+  }
+}
+
 function updateControls() {
+  void syncWakeLock();
   const hasPdf = Boolean(state.pdf);
   els.prevPageBtn.disabled = !hasPdf || state.currentPage <= 1;
   els.nextPageBtn.disabled = !hasPdf || state.currentPage >= state.pdf.numPages;
@@ -349,6 +379,10 @@ window.addEventListener('keydown', (event) => {
   if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(event.key)) {
     pauseAutoScrollForUserInput();
   }
+});
+
+window.addEventListener('visibilitychange', () => {
+  void syncWakeLock();
 });
 
 window.addEventListener('beforeunload', () => {
