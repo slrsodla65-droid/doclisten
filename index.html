@@ -14,10 +14,10 @@
           <p class="eyebrow">DocListen</p>
           <h1>긴 PDF, 이제 귀로 들으세요</h1>
         </div>
-        <label class="upload-button">
-          PDF 업로드
-          <input id="fileInput" type="file" accept="application/pdf" />
-        </label>
+        <div class="upload-control">
+          <button id="uploadBtn" class="upload-button" type="button">PDF 업로드</button>
+          <input id="fileInput" class="file-input" type="file" accept="application/pdf,.pdf" />
+        </div>
       </header>
 
       <section id="emptyState" class="empty-state">
@@ -137,6 +137,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=32"></script>
+    <script type="module" src="./src/app.mjs?v=33"></script>
   </body>
 </html>

@@ -114,6 +114,15 @@ test('screen wake lock is needed only while actively listening', () => {
   assert.equal(shouldKeepScreenAwake({ speaking: false, paused: false }), false);
 });
 
+test('upload control uses a real button and pdf extension fallback for mobile file pickers', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  assert.match(html, /<button id="uploadBtn"[^>]*type="button"[^>]*>\s*PDF 업로드\s*<\/button>/);
+  assert.match(html, /<input id="fileInput"[^>]*type="file"[^>]*accept="application\/pdf,\.pdf"/);
+  assert.doesNotMatch(css, /\.upload-button input\s*\{\s*display:\s*none;\s*\}/);
+});
+
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 

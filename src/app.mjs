@@ -9,6 +9,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 const els = {
   fileInput: document.querySelector('#fileInput'),
+  uploadBtn: document.querySelector('#uploadBtn'),
   emptyState: document.querySelector('#emptyState'),
   reader: document.querySelector('#reader'),
   player: document.querySelector('#player'),
@@ -324,6 +325,11 @@ async function loadPdf(file) {
   els.currentText.textContent = state.activeBlock?.text || '듣기 버튼을 누르거나 문단을 터치하세요.';
   updateControls();
 }
+
+els.uploadBtn.addEventListener('click', () => {
+  els.fileInput.value = '';
+  els.fileInput.click();
+});
 
 els.fileInput.addEventListener('change', async (event) => {
   const file = event.target.files?.[0];
