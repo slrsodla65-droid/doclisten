@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   buildBlocksFromTextItems,
   findBlockAtPoint,
@@ -88,4 +89,14 @@ test('normalizeServerVoices keeps Korean neural voices first and labels them', (
   assert.equal(voices.length, 2);
   assert.equal(voices[0].value, 'ko-KR-InJoonNeural');
   assert.match(voices[0].label, /한국어 AI/);
+});
+
+test('rate select offers granular speeds from 0.5x to 2.0x', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+
+  for (let value = 0.5; value <= 2.0; value = Math.round((value + 0.1) * 10) / 10) {
+    const label = value === 1 ? '1.0x' : `${value.toFixed(1)}x`;
+    const optionValue = value === 1 ? '1' : value.toFixed(1);
+    assert.match(html, new RegExp(`<option value="${optionValue}"[^>]*>${label}</option>`));
+  }
 });
