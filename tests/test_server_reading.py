@@ -212,6 +212,20 @@ def test_existing_google_user_becomes_unlimited_admin_without_relogin(tmp_path, 
     assert after_admin["usage"]["plan"] == "admin"
 
 
+def test_requested_owner_google_email_is_unlimited_admin(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    monkeypatch.delenv("DOC_LISTEN_ADMIN_EMAILS", raising=False)
+
+    user = get_or_create_user("gkrwodl3@gmail.com", store, auth_provider="google")
+
+    assert user["plan"] == "admin"
+    for _ in range(5):
+        result = record_listen_usage(user["token"], store, "2026-07-01", limit=1)
+        assert result["allowed"] is True
+        assert result["usage"]["plan"] == "admin"
+        assert result["usage"]["remaining"] is None
+
+
 def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
     monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
@@ -381,6 +395,7 @@ def test_health_status_exposes_safe_operational_readiness(tmp_path, monkeypatch)
     assert status["storage"] == "sqlite"
     assert status["googleOAuthConfigured"] is True
     assert status["betaActivationConfigured"] is True
+    assert status["adminEmailConfigured"] is True
     assert "secret" not in str(status).lower()
 
 

@@ -60,6 +60,7 @@ OAUTH_STATE_STORE = ROOT / ".doclisten_oauth_states.json"
 USER_STORE_LOCK = threading.Lock()
 OAUTH_STATE_LOCK = threading.Lock()
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+DEFAULT_ADMIN_EMAILS = {"gkrwodl3@gmail.com"}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -183,7 +184,8 @@ def normalize_email(email: str) -> str:
 
 def admin_emails() -> set[str]:
     raw = os.environ.get("DOC_LISTEN_ADMIN_EMAILS", "")
-    return {normalize_email(item) for item in re.split(r"[,\s]+", raw) if is_valid_email(item)}
+    configured = {normalize_email(item) for item in re.split(r"[,\s]+", raw) if is_valid_email(item)}
+    return DEFAULT_ADMIN_EMAILS | configured
 
 
 def is_admin_email(email: str) -> bool:
@@ -695,6 +697,7 @@ def get_health_status() -> dict:
         "storage": "sqlite" if is_sqlite_user_store(store_path) else "json",
         "googleOAuthConfigured": bool(os.environ.get("GOOGLE_CLIENT_ID", "").strip() and os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()),
         "betaActivationConfigured": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
+        "adminEmailConfigured": bool(admin_emails()),
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
     }
 
