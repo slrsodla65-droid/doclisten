@@ -33,6 +33,8 @@ const els = {
   planLabel: document.querySelector('#planLabel'),
   usageLabel: document.querySelector('#usageLabel'),
   paywallNotice: document.querySelector('#paywallNotice'),
+  paymentLinks: document.querySelectorAll('[data-payment-cta]'),
+  priceLabels: document.querySelectorAll('[data-beta-price-label]'),
 };
 
 const state = {
@@ -53,6 +55,30 @@ const state = {
 
 const canvasContext = els.pdfCanvas.getContext('2d');
 
+
+
+async function loadPaymentConfig() {
+  try {
+    const response = await fetch('/api/config', { cache: 'no-store' });
+    if (!response.ok) return;
+    const config = await response.json();
+    if (config.betaPriceLabel) {
+      els.priceLabels.forEach((node) => {
+        node.textContent = config.betaPriceLabel;
+      });
+    }
+    if (config.paymentUrl) {
+      els.paymentLinks.forEach((node) => {
+        node.href = config.paymentUrl;
+        node.target = '_blank';
+        node.rel = 'noopener noreferrer';
+        node.textContent = '유료 베타 결제하기';
+      });
+    }
+  } catch (error) {
+    console.debug('Payment config unavailable', error);
+  }
+}
 
 function loadDailyUsage() {
   const raw = localStorage.getItem(getDailyUsageKey());
@@ -447,5 +473,6 @@ window.addEventListener('beforeunload', () => {
 });
 
 loadDailyUsage();
+void loadPaymentConfig();
 updateControls();
 updateUsageUi();

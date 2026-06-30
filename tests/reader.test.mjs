@@ -151,3 +151,13 @@ test('daily usage key resets by calendar day', () => {
   assert.equal(getDailyUsageKey('usage', new Date('2026-06-30T01:00:00.000Z')), 'usage:2026-06-30');
   assert.equal(getDailyUsageKey('usage', new Date('2026-07-01T01:00:00.000Z')), 'usage:2026-07-01');
 });
+
+
+test('payment CTAs can be converted to payment links from server config', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+
+  assert.match(html, /data-payment-cta/);
+  assert.match(html, /data-beta-price-label/);
+  assert.match(app, /fetch\('\/api\/config'/);
+});

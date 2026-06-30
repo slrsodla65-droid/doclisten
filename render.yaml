@@ -8,3 +8,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: DOC_LISTEN_PAYMENT_PROVIDER
+        value: toss-payments
+      - key: DOC_LISTEN_BETA_PRICE_LABEL
+        value: 월 4,900원 베타 후보
+      # 결제사에서 실제 결제 URL을 만든 뒤 Render 대시보드에서 설정합니다.
+      # - key: DOC_LISTEN_PAYMENT_URL
+      #   value: https://example.com/pay/doclisten-beta

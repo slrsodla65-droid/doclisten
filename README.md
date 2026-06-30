@@ -71,3 +71,18 @@ doclisten.app
 - Credit 후보: 1문서 900원
 - 현재 결제 연결 전 단계이며, 유료 베타 신청은 문의 페이지에서 받습니다.
 - 실제 결제 연결 후보: Stripe 또는 Toss Payments
+
+
+## 결제 연결
+
+추천 방식은 Toss Payments 결제링크/결제창으로 시작하는 것입니다.
+
+Render 환경변수에 아래 값을 넣으면 앱의 유료 베타 CTA가 결제 페이지로 자동 연결됩니다.
+
+```text
+DOC_LISTEN_PAYMENT_PROVIDER=toss-payments
+DOC_LISTEN_PAYMENT_URL=https://결제사가_제공한_결제_URL
+DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원
+```
+
+환경변수가 없으면 기존처럼 문의 페이지로 연결됩니다.

@@ -40,8 +40,11 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if urlparse(self.path).path == "/api/voices":
+        path = urlparse(self.path).path
+        if path == "/api/voices":
             return self.send_json({"voices": KOREAN_VOICES})
+        if path == "/api/config":
+            return self.send_json(get_public_config())
         return super().do_GET()
 
     def do_POST(self):
@@ -81,6 +84,24 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+
+def safe_public_url(value: str) -> str:
+    url = str(value or "").strip()
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc:
+        return ""
+    return url
+
+
+def get_public_config() -> dict:
+    payment_url = safe_public_url(os.environ.get("DOC_LISTEN_PAYMENT_URL", ""))
+    return {
+        "paymentProvider": os.environ.get("DOC_LISTEN_PAYMENT_PROVIDER", "toss-payments"),
+        "paymentUrl": payment_url,
+        "betaPriceLabel": os.environ.get("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원 베타 후보"),
+        "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
+    }
 
 
 def transform_to_reading_script(text: str) -> str:

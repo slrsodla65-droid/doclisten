@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import normalize_tts_pronunciation, split_multilingual_tts_segments, transform_to_reading_script
+from server import get_public_config, normalize_tts_pronunciation, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -56,3 +56,22 @@ def test_split_multilingual_tts_segments_treats_full_english_sentence_as_english
     segments = split_multilingual_tts_segments("This service reads PDF documents naturally.")
 
     assert segments == [("en", "This service reads PDF documents naturally.")]
+
+
+def test_safe_public_url_accepts_https_only():
+    assert safe_public_url("https://pay.example.com/doclisten") == "https://pay.example.com/doclisten"
+    assert safe_public_url("http://pay.example.com/doclisten") == ""
+    assert safe_public_url("javascript:alert(1)") == ""
+
+
+def test_public_config_reads_payment_environment(monkeypatch):
+    monkeypatch.setenv("DOC_LISTEN_PAYMENT_URL", "https://pay.example.com/beta")
+    monkeypatch.setenv("DOC_LISTEN_PAYMENT_PROVIDER", "toss-payments")
+    monkeypatch.setenv("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원")
+
+    config = get_public_config()
+
+    assert config["paymentProvider"] == "toss-payments"
+    assert config["paymentUrl"] == "https://pay.example.com/beta"
+    assert config["betaPriceLabel"] == "월 4,900원"
+    assert config["freeDailyLimit"] == 20
