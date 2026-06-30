@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocListen 토스 입력값 복사</title>
+    <style>
+      body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #070a12; color: #f8fafc; }
+      main { max-width: 760px; margin: 0 auto; padding: 20px; }
+      h1 { font-size: 24px; margin: 0 0 8px; }
+      p { color: #a9b4c7; line-height: 1.6; }
+      .item { border: 1px solid rgba(255,255,255,.12); background: #111827; border-radius: 18px; padding: 16px; margin: 12px 0; }
+      .label { color: #93c5fd; font-size: 13px; margin-bottom: 8px; }
+      .value { font-size: 18px; line-height: 1.5; word-break: keep-all; }
+      button { width: 100%; margin-top: 12px; border: 0; border-radius: 14px; padding: 14px; font-size: 17px; font-weight: 800; color: #06130d; background: #86efac; }
+      .toast { position: fixed; left: 16px; right: 16px; bottom: 18px; display: none; padding: 14px; border-radius: 14px; text-align: center; color: #06130d; background: #86efac; font-weight: 800; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>토스페이먼츠 입력값 복사</h1>
+      <p>각 항목의 <strong>복사하기</strong> 버튼을 누른 뒤 토스 입력칸에 붙여넣으세요.</p>
+      <section id="items"></section>
+    </main>
+    <div id="toast" class="toast">복사됐습니다</div>
+    <script>
+      const items = [
+        ['온라인 플랫폼 사업자인가요?', '네'],
+        ['개인 셀러 포함 여부', '아니요, 모두 사업자번호를 가진 사업자 셀러예요.'],
+        ['PG 자격증 여부', '아니요'],
+        ['판매 상품', 'PDF 문서를 업로드하여 브라우저에서 문단별로 들을 수 있는 웹 기반 PDF 듣기 서비스의 유료 베타 이용권'],
+        ['현금성 상품 여부', '아니요'],
+        ['가장 비싼 상품 가격대', '1만원 미만'],
+        ['배송완료 또는 서비스 종료까지 걸리는 시간', '결제 즉시'],
+        ['예약판매/주문제작', '아님'],
+        ['중고 상품', '아님'],
+        ['공동구매', '아님'],
+        ['해외 상품', '아님'],
+        ['구독형 상품', '아님']
+      ];
+      const root = document.querySelector('#items');
+      const toast = document.querySelector('#toast');
+      function showToast(text) {
+        toast.textContent = text;
+        toast.style.display = 'block';
+        clearTimeout(window.__toastTimer);
+        window.__toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 1400);
+      }
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('복사됐습니다');
+        } catch (error) {
+          const area = document.createElement('textarea');
+          area.value = text;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+          showToast('복사됐습니다');
+        }
+      }
+      items.forEach(([label, value]) => {
+        const card = document.createElement('article');
+        card.className = 'item';
+        card.innerHTML = `<div class="label"></div><div class="value"></div><button type="button">복사하기</button>`;
+        card.querySelector('.label').textContent = label;
+        card.querySelector('.value').textContent = value;
+        card.querySelector('button').addEventListener('click', () => copyText(value));
+        root.appendChild(card);
+      });
+    </script>
+  </body>
+</html>
