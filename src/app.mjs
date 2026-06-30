@@ -221,7 +221,15 @@ async function activateBetaCode() {
   });
   const payload = await response.json();
   if (!response.ok || !payload.ok) {
-    setAccountMessage('베타 코드가 맞지 않거나 아직 서버에 설정되지 않았습니다.');
+    if (payload.reason === 'code-already-used') {
+      setAccountMessage('이미 다른 계정에서 사용된 베타 코드입니다. 카카오톡으로 새 코드를 요청해주세요.');
+      return;
+    }
+    if (payload.reason === 'code-not-configured') {
+      setAccountMessage('베타 코드가 아직 서버에 설정되지 않았습니다. 카카오톡으로 운영자에게 확인해주세요.');
+      return;
+    }
+    setAccountMessage('베타 코드가 맞지 않습니다. 카카오톡으로 받은 코드를 다시 확인해주세요.');
     return;
   }
   applyServerStatus(payload);

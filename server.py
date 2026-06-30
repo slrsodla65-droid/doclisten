@@ -195,6 +195,9 @@ def init_sqlite_user_store(path: Path = USER_STORE):
             )
             """
         )
+        columns = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
+        if "activated_code" not in columns:
+            conn.execute("ALTER TABLE users ADD COLUMN activated_code TEXT")
         conn.commit()
 
 
@@ -215,6 +218,8 @@ def sqlite_row_to_user(row: sqlite3.Row) -> dict:
         user["adminGrantedAt"] = row["admin_granted_at"]
     if row["activated_at"]:
         user["activatedAt"] = row["activated_at"]
+    if "activated_code" in row.keys() and row["activated_code"]:
+        user["activatedCode"] = row["activated_code"]
     return user
 
 
@@ -252,8 +257,8 @@ def save_user_store(data: dict, path: Path = USER_STORE):
                 """
                 INSERT INTO users (
                     token, email, plan, auth_provider, usage_json,
-                    created_at, admin_granted_at, activated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, admin_granted_at, activated_at, activated_code
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -265,6 +270,7 @@ def save_user_store(data: dict, path: Path = USER_STORE):
                         user.get("createdAt") or datetime.now(timezone.utc).isoformat(),
                         user.get("adminGrantedAt"),
                         user.get("activatedAt"),
+                        user.get("activatedCode"),
                     )
                     for token, user in users.items()
                     if is_valid_email(user.get("email", ""))
@@ -423,16 +429,34 @@ def record_listen_usage(token: str, path: Path = USER_STORE, day: str | None = N
         return {"allowed": True, "reason": "ok", "usage": create_usage_snapshot(user, day, limit), "user": public_user(user)}
 
 
+def beta_access_codes() -> tuple[set[str], bool]:
+    multi_codes = {
+        item.strip()
+        for item in os.environ.get("DOC_LISTEN_BETA_ACCESS_CODES", "").split(",")
+        if item.strip()
+    }
+    if multi_codes:
+        return multi_codes, True
+    single_code = os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()
+    return ({single_code} if single_code else set()), False
+
+
 def mark_user_paid_with_code(token: str, code: str, path: Path = USER_STORE) -> dict:
-    expected = os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()
-    if not expected:
+    codes, one_time_codes = beta_access_codes()
+    submitted_code = str(code or "").strip()
+    if not codes:
         return {"ok": False, "reason": "code-not-configured"}
-    if str(code or "").strip() != expected:
+    if submitted_code not in codes:
         return {"ok": False, "reason": "invalid-code"}
     with USER_STORE_LOCK:
         data, user = find_user_by_token(token, path)
         if not user:
             return {"ok": False, "reason": "not-authenticated"}
+        if one_time_codes:
+            for existing_user in data["users"].values():
+                if existing_user.get("activatedCode") == submitted_code and existing_user.get("email") != user.get("email"):
+                    return {"ok": False, "reason": "code-already-used"}
+            user["activatedCode"] = submitted_code
         user["plan"] = "beta-pro"
         user["activatedAt"] = datetime.now(timezone.utc).isoformat()
         save_user_store(data, path)

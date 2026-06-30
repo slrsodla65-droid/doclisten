@@ -160,6 +160,9 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
   assert.match(contact, /월 4,900원/);
   assert.match(contact, /베타 코드/);
+  assert.match(contact, /카카오톡 결제 신청 순서/);
+  assert.match(contact, /입금자명/);
+  assert.match(contact, /Google 로그인 이메일/);
   assert.match(privacy, /Google 로그인/);
   assert.match(privacy, /일별 문단 사용량/);
   assert.match(privacy, /계정 삭제/);
@@ -174,6 +177,7 @@ test('payment CTAs can be converted to payment links from server config', () => 
   assert.match(html, /data-beta-price-label/);
   assert.match(app, /fetch\('\/api\/config'/);
   assert.match(app, /카카오톡으로 베타 신청/);
+  assert.match(app, /이미 다른 계정에서 사용된 베타 코드/);
 });
 
 

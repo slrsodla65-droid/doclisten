@@ -296,6 +296,19 @@ select {
   padding: 12px;
   background: rgba(124, 58, 237, 0.12);
 }
+.payment-steps { padding-left: 22px; }
+.payment-steps li { margin: 8px 0; }
+.copy-template {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  color: #dbeafe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.7;
+}
 
 @media (max-width: 640px) {
   body { padding-bottom: 230px; }

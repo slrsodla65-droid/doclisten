@@ -164,6 +164,24 @@ def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
     assert activation["reason"] == "invalid-code"
 
 
+def test_beta_access_codes_can_be_issued_once_for_kakao_manual_payment(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODES", "PAID-1111, PAID-2222")
+    first_user = get_or_create_user("first@example.com", store, auth_provider="google")
+    second_user = get_or_create_user("second@example.com", store, auth_provider="google")
+
+    first_activation = mark_user_paid_with_code(first_user["token"], "PAID-1111", store)
+    reuse_by_same_user = mark_user_paid_with_code(first_user["token"], "PAID-1111", store)
+    reuse_by_other_user = mark_user_paid_with_code(second_user["token"], "PAID-1111", store)
+    second_activation = mark_user_paid_with_code(second_user["token"], "PAID-2222", store)
+
+    assert first_activation["ok"] is True
+    assert reuse_by_same_user["ok"] is True
+    assert reuse_by_other_user["ok"] is False
+    assert reuse_by_other_user["reason"] == "code-already-used"
+    assert second_activation["ok"] is True
+
+
 def test_logout_revokes_token_without_deleting_account(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
     monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
