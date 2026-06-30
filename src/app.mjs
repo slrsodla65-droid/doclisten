@@ -7,7 +7,7 @@ import {
   getDailyUsageKey,
   createDailyUsageSnapshot,
   canStartListeningForPlan,
-} from './readerCore.mjs';
+} from './readerCore.mjs?v=34';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
