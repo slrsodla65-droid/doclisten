@@ -154,8 +154,10 @@ test('daily usage key resets by calendar day', () => {
 
 
 test('static policy pages disclose login and paid beta basics', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
   const privacy = readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
+  const terms = readFileSync(new URL('../terms.html', import.meta.url), 'utf8');
 
   assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
   assert.match(contact, /월 4,900원/);
@@ -163,6 +165,13 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /카카오톡 결제 신청 순서/);
   assert.match(contact, /입금자명/);
   assert.match(contact, /Google 로그인 이메일/);
+  assert.match(contact, /결제 확인일로부터 30일/);
+  assert.match(contact, /환불 요청/);
+  assert.match(html, /결제 확인일로부터 30일/);
+  assert.match(terms, /유료 베타 이용기간/);
+  assert.match(terms, /결제 확인일로부터 30일/);
+  assert.match(terms, /환불/);
+  assert.match(terms, /베타 서비스/);
   assert.match(privacy, /Google 로그인/);
   assert.match(privacy, /일별 문단 사용량/);
   assert.match(privacy, /계정 삭제/);
