@@ -14,7 +14,7 @@ import subprocess
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import parse_qs, quote, urlencode, urlparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
@@ -890,8 +890,20 @@ def concat_mp3(files: list[Path], out: Path):
         list_path.unlink(missing_ok=True)
 
 
+def download_google_tts_mp3(text: str, lang: str, out: Path):
+    # gTTS 라이브러리 없이도 Render 런타임에서 동작하도록 Google translate TTS HTTP endpoint를 직접 호출한다.
+    # 긴 문장은 이미 split_for_human_reading에서 잘게 나뉘므로 여기서는 한 조각만 받는다.
+    safe_lang = "en" if lang == "en" else "ko"
+    url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={safe_lang}&q={quote(text[:190])}"
+    request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urlopen(request, timeout=30) as response:
+        data = response.read()
+    if not data.startswith(b"ID3") and b"\xff" not in data[:8]:
+        raise RuntimeError("Google TTS returned non-audio data")
+    out.write_bytes(data)
+
+
 def synthesize_gtts_human(text: str, out: Path):
-    from gtts import gTTS
     chunks = split_for_human_reading(text)
     with tempfile.TemporaryDirectory() as tmp:
         tmpdir = Path(tmp)
@@ -900,7 +912,7 @@ def synthesize_gtts_human(text: str, out: Path):
         for i, chunk in enumerate(chunks):
             for lang, segment in split_multilingual_tts_segments(chunk):
                 chunk_path = tmpdir / f"chunk_{serial:03d}_{lang}.mp3"
-                gTTS(text=segment, lang=lang).save(str(chunk_path))
+                download_google_tts_mp3(segment, lang, chunk_path)
                 files.append(chunk_path)
                 serial += 1
             if i < len(chunks) - 1:
@@ -912,8 +924,7 @@ def synthesize_gtts_human(text: str, out: Path):
 
 
 def synthesize_gtts(text: str, out: Path):
-    from gtts import gTTS
-    gTTS(text=text, lang="ko").save(str(out))
+    download_google_tts_mp3(text, "ko", out)
 
 async def synthesize_edge(text: str, voice: str, rate: str, out: Path):
     import edge_tts
