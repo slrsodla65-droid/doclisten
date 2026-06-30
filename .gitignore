@@ -8,3 +8,5 @@ node_modules/
 .env.*
 *.log
 public/samples/*.mp3
+.doclisten_users.json
+.doclisten_users.json.tmp

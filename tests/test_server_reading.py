@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import get_public_config, normalize_tts_pronunciation, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import create_usage_snapshot, get_or_create_user, get_public_config, mark_user_paid_with_code, normalize_tts_pronunciation, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -85,3 +85,49 @@ def test_public_config_defaults_to_kakao_openchat(monkeypatch):
 
     assert config["paymentProvider"] == "kakao-openchat"
     assert config["paymentUrl"] == "https://open.kakao.com/o/sKDe1RBi"
+
+
+def test_server_usage_tracks_free_limit_by_user(tmp_path):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("user@example.com", store)
+
+    snapshot = create_usage_snapshot(user, "2026-06-30", limit=2)
+    assert snapshot["plan"] == "free"
+    assert snapshot["used"] == 0
+    assert snapshot["remaining"] == 2
+    assert snapshot["reached"] is False
+
+    first = record_listen_usage(user["token"], store, "2026-06-30", limit=2)
+    second = record_listen_usage(user["token"], store, "2026-06-30", limit=2)
+    blocked = record_listen_usage(user["token"], store, "2026-06-30", limit=2)
+
+    assert first["allowed"] is True
+    assert second["allowed"] is True
+    assert blocked["allowed"] is False
+    assert blocked["usage"]["used"] == 2
+
+
+def test_paid_user_bypasses_free_limit_after_beta_code(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
+    user = get_or_create_user("paid@example.com", store)
+
+    activation = mark_user_paid_with_code(user["token"], "PAID-1234", store)
+    assert activation["ok"] is True
+    assert activation["user"]["plan"] == "beta-pro"
+
+    for _ in range(5):
+        result = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+        assert result["allowed"] is True
+        assert result["usage"]["plan"] == "beta-pro"
+
+
+def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
+    user = get_or_create_user("wrong@example.com", store)
+
+    activation = mark_user_paid_with_code(user["token"], "BAD", store)
+
+    assert activation["ok"] is False
+    assert activation["reason"] == "invalid-code"

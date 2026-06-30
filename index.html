@@ -26,12 +26,30 @@
         </div>
       </header>
 
-      <section class="usage-panel" aria-label="무료 체험 사용량">
+      <section class="usage-panel" aria-label="회원 및 무료 체험 사용량">
         <div>
           <strong id="planLabel">Free 체험</strong>
-          <p id="usageLabel">오늘 무료 듣기 20문단까지 사용할 수 있습니다.</p>
+          <p id="usageLabel">이메일 로그인 후 오늘 무료 듣기 20문단까지 사용할 수 있습니다.</p>
         </div>
         <a class="mini-cta" href="./contact.html" data-payment-cta>카카오톡 베타 신청</a>
+      </section>
+
+      <section class="account-panel" aria-label="회원 로그인과 베타 코드">
+        <div class="account-row">
+          <label>
+            이메일 로그인
+            <input id="emailInput" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com" />
+          </label>
+          <button id="loginBtn" type="button">로그인/등록</button>
+        </div>
+        <div class="account-row">
+          <label>
+            베타 코드
+            <input id="betaCodeInput" type="text" autocomplete="one-time-code" placeholder="입금 확인 후 받은 코드" />
+          </label>
+          <button id="activateBtn" type="button">유료 해제</button>
+        </div>
+        <p id="accountMessage" class="account-message">로그인하면 사용량이 서버에 저장되어 기기를 바꿔도 같은 한도가 적용됩니다.</p>
       </section>
 
       <section id="paywallNotice" class="paywall-notice hidden" role="status">
@@ -157,6 +175,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=36"></script>
+    <script type="module" src="./src/app.mjs?v=37"></script>
   </body>
 </html>

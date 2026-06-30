@@ -4,6 +4,9 @@ import hashlib
 import json
 import os
 import re
+import secrets
+import threading
+from datetime import datetime, timezone
 import subprocess
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -25,6 +28,9 @@ KOREAN_VOICE_NAMES = {v["ShortName"] for v in KOREAN_VOICES}
 CACHE_VERSION = "multilingual-reading-v1"
 RATE_MAP = {"0.8": "-20%", "1": "+0%", "1.0": "+0%", "1.2": "+20%", "1.5": "+50%"}
 DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
+USER_STORE = ROOT / ".doclisten_users.json"
+USER_STORE_LOCK = threading.Lock()
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -46,15 +52,32 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"voices": KOREAN_VOICES})
         if path == "/api/config":
             return self.send_json(get_public_config())
+        if path == "/api/me":
+            token = self.headers.get("X-DocListen-Token", "")
+            return self.send_json(get_user_status(token))
         return super().do_GET()
 
     def do_POST(self):
-        if urlparse(self.path).path != "/api/tts":
-            self.send_error(404)
-            return
+        path = urlparse(self.path).path
         try:
             length = int(self.headers.get("content-length", "0"))
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+            if path == "/api/login":
+                email = str(payload.get("email", "")).strip().lower()
+                if not is_valid_email(email):
+                    return self.send_json({"ok": False, "reason": "invalid-email"}, status=400)
+                return self.send_json({"ok": True, "user": get_or_create_user(email)})
+            if path == "/api/listen":
+                token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
+                return self.send_json(record_listen_usage(token))
+            if path == "/api/activate":
+                token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
+                code = str(payload.get("code", "")).strip()
+                result = mark_user_paid_with_code(token, code)
+                return self.send_json(result, status=200 if result.get("ok") else 400)
+            if path != "/api/tts":
+                self.send_error(404)
+                return
             text = str(payload.get("text", "")).strip()
             voice = str(payload.get("voice", "ko-KR-SunHiNeural"))
             rate = str(payload.get("rate", "1"))
@@ -78,13 +101,134 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as exc:
             self.send_error(500, str(exc))
 
-    def send_json(self, payload):
+    def send_json(self, payload, status=200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-        self.send_response(200)
+        self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+
+def today_key() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+def is_valid_email(email: str) -> bool:
+    return bool(EMAIL_RE.fullmatch(str(email or "").strip().lower()))
+
+
+def normalize_email(email: str) -> str:
+    return str(email or "").strip().lower()
+
+
+def empty_user_store() -> dict:
+    return {"users": {}}
+
+
+def load_user_store(path: Path = USER_STORE) -> dict:
+    if not path.exists():
+        return empty_user_store()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return empty_user_store()
+    if not isinstance(data, dict) or not isinstance(data.get("users"), dict):
+        return empty_user_store()
+    return data
+
+
+def save_user_store(data: dict, path: Path = USER_STORE):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(path)
+
+
+def public_user(user: dict) -> dict:
+    return {
+        "email": user.get("email", ""),
+        "token": user.get("token", ""),
+        "plan": user.get("plan", "free"),
+    }
+
+
+def get_or_create_user(email: str, path: Path = USER_STORE) -> dict:
+    email = normalize_email(email)
+    if not is_valid_email(email):
+        raise ValueError("invalid email")
+    with USER_STORE_LOCK:
+        data = load_user_store(path)
+        for user in data["users"].values():
+            if user.get("email") == email:
+                return public_user(user)
+        token = secrets.token_urlsafe(24)
+        data["users"][token] = {
+            "email": email,
+            "token": token,
+            "plan": "free",
+            "usage": {},
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+        }
+        save_user_store(data, path)
+        return public_user(data["users"][token])
+
+
+def find_user_by_token(token: str, path: Path = USER_STORE) -> tuple[dict, dict | None]:
+    data = load_user_store(path)
+    user = data["users"].get(str(token or ""))
+    return data, user
+
+
+def create_usage_snapshot(user: dict | None, day: str | None = None, limit: int | None = None) -> dict:
+    limit = int(limit or os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20"))
+    day = day or today_key()
+    if not user:
+        return {"authenticated": False, "plan": "free", "day": day, "used": 0, "limit": limit, "remaining": limit, "reached": False}
+    plan = user.get("plan", "free")
+    used = int((user.get("usage") or {}).get(day, 0))
+    if plan != "free":
+        return {"authenticated": True, "plan": plan, "day": day, "used": used, "limit": limit, "remaining": None, "reached": False}
+    remaining = max(0, limit - used)
+    return {"authenticated": True, "plan": plan, "day": day, "used": used, "limit": limit, "remaining": remaining, "reached": used >= limit}
+
+
+def get_user_status(token: str, path: Path = USER_STORE) -> dict:
+    _, user = find_user_by_token(token, path)
+    if not user:
+        return {"ok": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None)}
+    return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
+
+
+def record_listen_usage(token: str, path: Path = USER_STORE, day: str | None = None, limit: int | None = None) -> dict:
+    day = day or today_key()
+    limit = int(limit or os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20"))
+    with USER_STORE_LOCK:
+        data, user = find_user_by_token(token, path)
+        if not user:
+            return {"allowed": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None, day, limit)}
+        usage = create_usage_snapshot(user, day, limit)
+        if user.get("plan", "free") == "free" and usage["reached"]:
+            return {"allowed": False, "reason": "free-daily-limit", "usage": usage, "user": public_user(user)}
+        user.setdefault("usage", {})[day] = int(user.setdefault("usage", {}).get(day, 0)) + 1
+        save_user_store(data, path)
+        return {"allowed": True, "reason": "ok", "usage": create_usage_snapshot(user, day, limit), "user": public_user(user)}
+
+
+def mark_user_paid_with_code(token: str, code: str, path: Path = USER_STORE) -> dict:
+    expected = os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()
+    if not expected:
+        return {"ok": False, "reason": "code-not-configured"}
+    if str(code or "").strip() != expected:
+        return {"ok": False, "reason": "invalid-code"}
+    with USER_STORE_LOCK:
+        data, user = find_user_by_token(token, path)
+        if not user:
+            return {"ok": False, "reason": "not-authenticated"}
+        user["plan"] = "beta-pro"
+        user["activatedAt"] = datetime.now(timezone.utc).isoformat()
+        save_user_store(data, path)
+        return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
 
 
 def safe_public_url(value: str) -> str:
@@ -105,6 +249,8 @@ def get_public_config() -> dict:
         "paymentUrl": payment_url,
         "betaPriceLabel": "월 4,900원 · 카카오톡 베타 신청" if is_kakao_openchat else env_price_label,
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
+        "serverUsage": True,
+        "activationEnabled": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
     }
 
 

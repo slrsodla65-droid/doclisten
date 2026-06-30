@@ -14,3 +14,6 @@ services:
         value: 월 4,900원 · 카카오톡 베타 신청
       - key: DOC_LISTEN_PAYMENT_URL
         value: https://open.kakao.com/o/sKDe1RBi
+      # 입금 확인 후 유료 해제에 사용할 코드는 Render 대시보드에서 Secret 환경변수로 설정합니다.
+      # - key: DOC_LISTEN_BETA_ACCESS_CODE
+      #   sync: false

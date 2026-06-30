@@ -35,6 +35,11 @@ const els = {
   paywallNotice: document.querySelector('#paywallNotice'),
   paymentLinks: document.querySelectorAll('[data-payment-cta]'),
   priceLabels: document.querySelectorAll('[data-beta-price-label]'),
+  emailInput: document.querySelector('#emailInput'),
+  loginBtn: document.querySelector('#loginBtn'),
+  betaCodeInput: document.querySelector('#betaCodeInput'),
+  activateBtn: document.querySelector('#activateBtn'),
+  accountMessage: document.querySelector('#accountMessage'),
 };
 
 const state = {
@@ -51,6 +56,9 @@ const state = {
   speechRunId: 0,
   plan: 'free',
   freeListensUsed: 0,
+  user: null,
+  token: localStorage.getItem('doclisten-user-token') || '',
+  serverUsage: null,
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
@@ -80,44 +88,128 @@ async function loadPaymentConfig() {
   }
 }
 
-function loadDailyUsage() {
-  const raw = localStorage.getItem(getDailyUsageKey());
-  state.freeListensUsed = Math.max(0, Number.parseInt(raw || '0', 10) || 0);
+function authHeaders() {
+  return state.token ? { 'X-DocListen-Token': state.token } : {};
 }
 
-function saveDailyUsage() {
-  localStorage.setItem(getDailyUsageKey(), String(state.freeListensUsed));
+function setAccountMessage(message) {
+  if (els.accountMessage) els.accountMessage.textContent = message;
+}
+
+function applyServerStatus(payload) {
+  if (payload?.user) {
+    state.user = payload.user;
+    state.token = payload.user.token || state.token;
+    localStorage.setItem('doclisten-user-token', state.token);
+    if (els.emailInput) els.emailInput.value = payload.user.email || '';
+  }
+  if (payload?.usage) {
+    state.serverUsage = payload.usage;
+    state.plan = payload.usage.plan || 'free';
+    state.freeListensUsed = Number(payload.usage.used || 0);
+  }
+  updateUsageUi();
+}
+
+async function refreshAccountStatus() {
+  if (!state.token) {
+    updateUsageUi();
+    return;
+  }
+  try {
+    const response = await fetch('/api/me', { headers: authHeaders(), cache: 'no-store' });
+    const payload = await response.json();
+    if (payload.ok) applyServerStatus(payload);
+  } catch (error) {
+    console.debug('Account status unavailable', error);
+  }
+}
+
+async function loginWithEmail() {
+  const email = els.emailInput?.value?.trim();
+  if (!email) {
+    setAccountMessage('이메일을 입력해주세요.');
+    return;
+  }
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    setAccountMessage('이메일 형식을 확인해주세요.');
+    return;
+  }
+  applyServerStatus({ user: payload.user, usage: payload.usage });
+  await refreshAccountStatus();
+  setAccountMessage('로그인 완료. 이제 사용량이 서버에 저장됩니다.');
+}
+
+async function activateBetaCode() {
+  const code = els.betaCodeInput?.value?.trim();
+  if (!state.token) {
+    setAccountMessage('먼저 이메일로 로그인해주세요.');
+    return;
+  }
+  if (!code) {
+    setAccountMessage('베타 코드를 입력해주세요.');
+    return;
+  }
+  const response = await fetch('/api/activate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: JSON.stringify({ code }),
+  });
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    setAccountMessage('베타 코드가 맞지 않거나 아직 서버에 설정되지 않았습니다.');
+    return;
+  }
+  applyServerStatus(payload);
+  setAccountMessage('Beta Pro 활성화 완료. 오늘 한도 없이 사용할 수 있습니다.');
 }
 
 function updateUsageUi() {
-  const usage = createDailyUsageSnapshot(state.freeListensUsed, FREE_DAILY_LISTEN_LIMIT);
-  if (els.planLabel) els.planLabel.textContent = state.plan === 'free' ? 'Free 체험' : 'Beta Pro';
+  const usage = state.serverUsage || createDailyUsageSnapshot(state.freeListensUsed, FREE_DAILY_LISTEN_LIMIT);
+  if (els.planLabel) els.planLabel.textContent = usage.plan === 'free' ? 'Free 체험' : 'Beta Pro';
   if (els.usageLabel) {
-    els.usageLabel.textContent = state.plan === 'free'
-      ? `오늘 무료 듣기 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`
-      : '유료 베타 사용 중 · 하루 제한 없이 사용할 수 있습니다.';
+    if (!state.token) {
+      els.usageLabel.textContent = `이메일 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
+    } else if (usage.plan === 'free') {
+      els.usageLabel.textContent = `서버 저장 사용량: 오늘 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`;
+    } else {
+      els.usageLabel.textContent = 'Beta Pro 활성화됨 · 하루 제한 없이 사용할 수 있습니다.';
+    }
   }
-  els.paywallNotice?.classList.toggle('hidden', !usage.reached || state.plan !== 'free');
+  els.paywallNotice?.classList.toggle('hidden', !usage.reached || usage.plan !== 'free');
 }
 
-function consumeListeningCredit() {
-  const decision = canStartListeningForPlan({
-    plan: state.plan,
-    used: state.freeListensUsed,
-    limit: FREE_DAILY_LISTEN_LIMIT,
-  });
-  if (!decision.allowed) {
-    updateUsageUi();
-    els.currentText.textContent = '오늘 무료 듣기 한도를 모두 사용했습니다. 유료 베타 신청 후 계속 사용할 수 있습니다.';
-    els.paywallNotice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+async function consumeListeningCredit() {
+  if (!state.token) {
+    setAccountMessage('무료 사용량 관리를 위해 먼저 이메일 로그인을 해주세요.');
+    els.emailInput?.focus();
     return false;
   }
-  if (state.plan === 'free') {
-    state.freeListensUsed += 1;
-    saveDailyUsage();
-    updateUsageUi();
+  try {
+    const response = await fetch('/api/listen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({}),
+    });
+    const payload = await response.json();
+    applyServerStatus(payload);
+    if (!payload.allowed) {
+      els.currentText.textContent = '오늘 무료 듣기 한도를 모두 사용했습니다. 카카오톡 베타 신청 후 코드를 입력하면 제한이 해제됩니다.';
+      els.paywallNotice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.debug('Server usage unavailable', error);
+    setAccountMessage('서버 사용량 확인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    return false;
   }
-  return true;
 }
 
 function progressKey() {
@@ -341,9 +433,9 @@ async function getPreviousBlock() {
   return null;
 }
 
-function speakBlock(block) {
+async function speakBlock(block) {
   if (!block?.text) return;
-  if (!consumeListeningCredit()) return;
+  if (!(await consumeListeningCredit())) return;
   state.speechRunId += 1;
   const runId = state.speechRunId;
   state.speaking = true;
@@ -468,11 +560,19 @@ window.addEventListener('visibilitychange', () => {
   void syncWakeLock();
 });
 
+els.loginBtn?.addEventListener('click', () => {
+  void loginWithEmail();
+});
+
+els.activateBtn?.addEventListener('click', () => {
+  void activateBetaCode();
+});
+
 window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
-loadDailyUsage();
 void loadPaymentConfig();
+void refreshAccountStatus();
 updateControls();
 updateUsageUi();
