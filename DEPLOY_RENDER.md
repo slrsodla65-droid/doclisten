@@ -1,10 +1,13 @@
 # DocListen Render 배포 안내
 
 ## 현재 상태
-- 도메인: `doclisten.app` 구매 완료
+- 도메인: `https://doclisten.app` 연결 완료
+- www 도메인: `https://www.doclisten.app` → `https://doclisten.app` 리다이렉트 확인 완료
+- Render 임시 주소: `https://doclisten.onrender.com`
 - 앱: 브라우저 기본 음성 기반 PDF 듣기 MVP
 - 서버 실행 명령: `python3 server.py`
 - 서버 포트: Render가 제공하는 `PORT` 환경변수 자동 사용
+- 앱 버전: `v33`
 
 ## 배포 추천
 처음 정식 베타는 Render Web Service를 추천한다.
@@ -43,7 +46,7 @@ Render 대시보드에서:
 - Runtime: `Python`
 - Build Command: `python3 -m py_compile server.py`
 - Start Command: `python3 server.py`
-- Plan: Free 또는 Starter
+- Plan: Free
 
 `render.yaml` 파일도 추가되어 있으므로 Render가 자동으로 감지할 수 있다.
 
@@ -78,18 +81,18 @@ Cloudflare에서 `doclisten.app` 도메인 관리 화면으로 이동:
 일반적인 형태:
 
 ### 루트 도메인
-- Type: `CNAME` 또는 `A` — Render 안내에 따름
+- Type: `CNAME`
 - Name: `@`
-- Target/Value: Render가 제공한 값
-- Proxy status: 처음엔 DNS only 권장
+- Target/Value: `doclisten.onrender.com`
+- Proxy status: DNS only
 
 ### www 도메인
 - Type: `CNAME`
 - Name: `www`
-- Target/Value: Render가 제공한 값
-- Proxy status: 처음엔 DNS only 권장
+- Target/Value: `doclisten.onrender.com`
+- Proxy status: DNS only
 
-주의: 실제 값은 Render 화면에 나온 값을 그대로 사용한다.
+주의: Cloudflare 네임서버를 쓰는 경우 루트 도메인을 Render의 A 레코드 `216.24.57.1`로 두면 Cloudflare Error 1000이 날 수 있으므로, 루트도 CNAME flattening 방식으로 `doclisten.onrender.com`에 연결한다.
 
 ## 6단계: HTTPS 확인
 최종 확인 주소:
