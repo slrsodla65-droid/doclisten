@@ -1,5 +1,36 @@
 export const AUTO_SCROLL_USER_PAUSE_MS = 8000;
 
+export const FREE_DAILY_LISTEN_LIMIT = 20;
+
+export function getDailyUsageKey(prefix = 'doclisten-free-listens', date = new Date()) {
+  const safeDate = date instanceof Date ? date : new Date(date);
+  const day = safeDate.toISOString().slice(0, 10);
+  return `${prefix}:${day}`;
+}
+
+export function createDailyUsageSnapshot(used = 0, limit = FREE_DAILY_LISTEN_LIMIT) {
+  const safeUsed = Math.max(0, Number.parseInt(used, 10) || 0);
+  const safeLimit = Math.max(1, Number.parseInt(limit, 10) || FREE_DAILY_LISTEN_LIMIT);
+  return {
+    used: safeUsed,
+    limit: safeLimit,
+    remaining: Math.max(0, safeLimit - safeUsed),
+    reached: safeUsed >= safeLimit,
+  };
+}
+
+export function canStartListeningForPlan({ plan = 'free', used = 0, limit = FREE_DAILY_LISTEN_LIMIT } = {}) {
+  if (String(plan).toLowerCase() !== 'free') {
+    return { allowed: true, reason: 'paid-plan' };
+  }
+  const usage = createDailyUsageSnapshot(used, limit);
+  if (usage.reached) {
+    return { allowed: false, reason: 'free-daily-limit', usage };
+  }
+  return { allowed: true, reason: 'free-remaining', usage };
+}
+
+
 export function shouldKeepScreenAwake({ speaking, paused } = {}) {
   return Boolean(speaking) && !Boolean(paused);
 }

@@ -12,6 +12,10 @@ import {
   shouldAutoScrollReading,
   AUTO_SCROLL_USER_PAUSE_MS,
   shouldKeepScreenAwake,
+  FREE_DAILY_LISTEN_LIMIT,
+  getDailyUsageKey,
+  createDailyUsageSnapshot,
+  canStartListeningForPlan,
 } from '../src/readerCore.mjs';
 
 test('buildBlocksFromTextItems groups nearby text items into ordered line blocks', () => {
@@ -131,4 +135,19 @@ test('rate select offers granular speeds from 0.5x to 2.0x', () => {
     const optionValue = value === 1 ? '1' : value.toFixed(1);
     assert.match(html, new RegExp(`<option value="${optionValue}"[^>]*>${label}</option>`));
   }
+});
+
+
+test('free daily usage limit blocks additional listening only for free users', () => {
+  assert.equal(FREE_DAILY_LISTEN_LIMIT, 20);
+  const usage = createDailyUsageSnapshot(19, 20);
+  assert.deepEqual(usage, { used: 19, limit: 20, remaining: 1, reached: false });
+  assert.equal(canStartListeningForPlan({ plan: 'free', used: 19, limit: 20 }).allowed, true);
+  assert.equal(canStartListeningForPlan({ plan: 'free', used: 20, limit: 20 }).allowed, false);
+  assert.equal(canStartListeningForPlan({ plan: 'beta-pro', used: 999, limit: 20 }).allowed, true);
+});
+
+test('daily usage key resets by calendar day', () => {
+  assert.equal(getDailyUsageKey('usage', new Date('2026-06-30T01:00:00.000Z')), 'usage:2026-06-30');
+  assert.equal(getDailyUsageKey('usage', new Date('2026-07-01T01:00:00.000Z')), 'usage:2026-07-01');
 });

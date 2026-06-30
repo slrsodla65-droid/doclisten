@@ -3,6 +3,10 @@ import {
   AUTO_SCROLL_USER_PAUSE_MS,
   shouldAutoScrollReading,
   shouldKeepScreenAwake,
+  FREE_DAILY_LISTEN_LIMIT,
+  getDailyUsageKey,
+  createDailyUsageSnapshot,
+  canStartListeningForPlan,
 } from './readerCore.mjs';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
@@ -26,6 +30,9 @@ const els = {
   rateSelect: document.querySelector('#rateSelect'),
   currentText: document.querySelector('#currentText'),
   docTitle: document.querySelector('#docTitle'),
+  planLabel: document.querySelector('#planLabel'),
+  usageLabel: document.querySelector('#usageLabel'),
+  paywallNotice: document.querySelector('#paywallNotice'),
 };
 
 const state = {
@@ -40,9 +47,52 @@ const state = {
   wakeLock: null,
   renderToken: 0,
   speechRunId: 0,
+  plan: 'free',
+  freeListensUsed: 0,
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
+
+
+function loadDailyUsage() {
+  const raw = localStorage.getItem(getDailyUsageKey());
+  state.freeListensUsed = Math.max(0, Number.parseInt(raw || '0', 10) || 0);
+}
+
+function saveDailyUsage() {
+  localStorage.setItem(getDailyUsageKey(), String(state.freeListensUsed));
+}
+
+function updateUsageUi() {
+  const usage = createDailyUsageSnapshot(state.freeListensUsed, FREE_DAILY_LISTEN_LIMIT);
+  if (els.planLabel) els.planLabel.textContent = state.plan === 'free' ? 'Free 체험' : 'Beta Pro';
+  if (els.usageLabel) {
+    els.usageLabel.textContent = state.plan === 'free'
+      ? `오늘 무료 듣기 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`
+      : '유료 베타 사용 중 · 하루 제한 없이 사용할 수 있습니다.';
+  }
+  els.paywallNotice?.classList.toggle('hidden', !usage.reached || state.plan !== 'free');
+}
+
+function consumeListeningCredit() {
+  const decision = canStartListeningForPlan({
+    plan: state.plan,
+    used: state.freeListensUsed,
+    limit: FREE_DAILY_LISTEN_LIMIT,
+  });
+  if (!decision.allowed) {
+    updateUsageUi();
+    els.currentText.textContent = '오늘 무료 듣기 한도를 모두 사용했습니다. 유료 베타 신청 후 계속 사용할 수 있습니다.';
+    els.paywallNotice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+  if (state.plan === 'free') {
+    state.freeListensUsed += 1;
+    saveDailyUsage();
+    updateUsageUi();
+  }
+  return true;
+}
 
 function progressKey() {
   return `pdf-listener-progress:${state.fileName}`;
@@ -267,6 +317,7 @@ async function getPreviousBlock() {
 
 function speakBlock(block) {
   if (!block?.text) return;
+  if (!consumeListeningCredit()) return;
   state.speechRunId += 1;
   const runId = state.speechRunId;
   state.speaking = true;
@@ -395,4 +446,6 @@ window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
+loadDailyUsage();
 updateControls();
+updateUsageUi();

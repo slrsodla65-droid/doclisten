@@ -14,11 +14,31 @@
           <p class="eyebrow">DocListen</p>
           <h1>긴 PDF, 이제 귀로 들으세요</h1>
         </div>
-        <div class="upload-control">
-          <button id="uploadBtn" class="upload-button" type="button">PDF 업로드</button>
-          <input id="fileInput" class="file-input" type="file" accept="application/pdf,.pdf" />
+        <div class="top-actions">
+          <nav class="site-nav compact-nav" aria-label="주요 메뉴">
+            <a href="#pricing">요금제</a>
+            <a href="./contact.html">베타 문의</a>
+          </nav>
+          <div class="upload-control">
+            <button id="uploadBtn" class="upload-button" type="button">PDF 업로드</button>
+            <input id="fileInput" class="file-input" type="file" accept="application/pdf,.pdf" />
+          </div>
         </div>
       </header>
+
+      <section class="usage-panel" aria-label="무료 체험 사용량">
+        <div>
+          <strong id="planLabel">Free 체험</strong>
+          <p id="usageLabel">오늘 무료 듣기 20문단까지 사용할 수 있습니다.</p>
+        </div>
+        <a class="mini-cta" href="./contact.html">유료 베타 신청</a>
+      </section>
+
+      <section id="paywallNotice" class="paywall-notice hidden" role="status">
+        <strong>오늘 무료 듣기 한도를 모두 사용했습니다.</strong>
+        <p>계속 사용하려면 유료 베타를 신청해주세요. 베타 기간에는 실제 결제 연결 전까지 문의 기반으로 선착순 전환을 받습니다.</p>
+        <a class="cta-button" href="./contact.html">유료 베타 문의하기</a>
+      </section>
 
       <section id="emptyState" class="empty-state">
         <div class="empty-card">
@@ -55,13 +75,13 @@
         </div>
       </section>
 
-      <section class="pricing-grid" aria-label="요금제 안내">
+      <section id="pricing" class="pricing-grid" aria-label="요금제 안내">
         <article class="pricing-card">
           <span class="plan-badge">무료 체험</span>
           <h3>Free</h3>
           <p class="price">0원</p>
           <ul>
-            <li>짧은 PDF 테스트</li>
+            <li>하루 20문단 듣기 체험</li>
             <li>문단 클릭 듣기</li>
             <li>브라우저 기본 음성</li>
             <li>마지막 위치 이어보기</li>
@@ -70,9 +90,9 @@
         <article class="pricing-card featured">
           <span class="plan-badge">추천 베타</span>
           <h3>Beta Pro</h3>
-          <p class="price">월 4,900원 후보</p>
+          <p class="price">월 4,900원 베타 후보</p>
           <ul>
-            <li>긴 PDF 사용량 확대</li>
+            <li>하루 제한 없이 긴 PDF 듣기</li>
             <li>더 많은 문서 듣기</li>
             <li>이어듣기/학습용 사용 최적화</li>
             <li>향후 고급 음성·요약 우선 제공</li>
@@ -81,7 +101,7 @@
         <article class="pricing-card">
           <span class="plan-badge">검토 중</span>
           <h3>Credit</h3>
-          <p class="price">건별 결제 후보</p>
+          <p class="price">1문서 900원 후보</p>
           <ul>
             <li>PDF 개수 단위 결제</li>
             <li>가끔 쓰는 사용자용</li>
@@ -137,6 +157,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=33"></script>
+    <script type="module" src="./src/app.mjs?v=34"></script>
   </body>
 </html>
