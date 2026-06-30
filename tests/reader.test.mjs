@@ -153,6 +153,18 @@ test('daily usage key resets by calendar day', () => {
 });
 
 
+test('static policy pages disclose login and paid beta basics', () => {
+  const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
+  const privacy = readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
+
+  assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
+  assert.match(contact, /월 4,900원/);
+  assert.match(contact, /베타 코드/);
+  assert.match(privacy, /Google 로그인/);
+  assert.match(privacy, /일별 문단 사용량/);
+});
+
+
 test('payment CTAs can be converted to payment links from server config', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
