@@ -164,13 +164,13 @@ test('payment CTAs can be converted to payment links from server config', () => 
 });
 
 
-test('social login buttons are present for Google Kakao and Naver', () => {
+test('only Google social login button is present', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 
   assert.match(html, /Google로 계속하기/);
-  assert.match(html, /카카오로 계속하기/);
-  assert.match(html, /네이버로 계속하기/);
   assert.match(html, /\/api\/oauth\/start\?provider=google/);
-  assert.match(html, /\/api\/oauth\/start\?provider=kakao/);
-  assert.match(html, /\/api\/oauth\/start\?provider=naver/);
+  assert.doesNotMatch(html, /카카오로 계속하기/);
+  assert.doesNotMatch(html, /네이버로 계속하기/);
+  assert.doesNotMatch(html, /\/api\/oauth\/start\?provider=kakao/);
+  assert.doesNotMatch(html, /\/api\/oauth\/start\?provider=naver/);
 });

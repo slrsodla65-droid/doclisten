@@ -321,32 +321,12 @@ def oauth_provider_config(provider: str) -> dict:
             "userInfoUrl": "https://openidconnect.googleapis.com/v1/userinfo",
             "scope": "openid email profile",
         }
-    if provider == "kakao":
-        return {
-            "provider": "kakao",
-            "clientId": os.environ.get("KAKAO_REST_API_KEY", "").strip(),
-            "clientSecret": os.environ.get("KAKAO_CLIENT_SECRET", "").strip(),
-            "authorizeUrl": "https://kauth.kakao.com/oauth/authorize",
-            "tokenUrl": "https://kauth.kakao.com/oauth/token",
-            "userInfoUrl": "https://kapi.kakao.com/v2/user/me",
-            "scope": "account_email profile_nickname",
-        }
-    if provider == "naver":
-        return {
-            "provider": "naver",
-            "clientId": os.environ.get("NAVER_CLIENT_ID", "").strip(),
-            "clientSecret": os.environ.get("NAVER_CLIENT_SECRET", "").strip(),
-            "authorizeUrl": "https://nid.naver.com/oauth2.0/authorize",
-            "tokenUrl": "https://nid.naver.com/oauth2.0/token",
-            "userInfoUrl": "https://openapi.naver.com/v1/nid/me",
-            "scope": "",
-        }
     return {}
 
 
 def configured_social_providers() -> list[str]:
     providers = []
-    for provider in ["google", "kakao", "naver"]:
+    for provider in ["google"]:
         config = oauth_provider_config(provider)
         if config.get("clientId") and config.get("clientSecret"):
             providers.append(provider)
@@ -364,15 +344,11 @@ def build_oauth_authorize_url(provider: str, redirect_uri: str, state: str) -> s
     }
     if provider == "google":
         params.update({"response_type": "code", "scope": config["scope"], "access_type": "offline", "prompt": "select_account"})
-    elif provider == "kakao":
-        params.update({"response_type": "code", "scope": config["scope"]})
-    elif provider == "naver":
-        params.update({"response_type": "code"})
     return f"{config['authorizeUrl']}?{urlencode(params)}"
 
 
 def provider_display_name(provider: str) -> str:
-    return {"google": "Google", "kakao": "카카오", "naver": "네이버"}.get(provider, provider)
+    return {"google": "Google"}.get(provider, provider)
 
 
 def oauth_error_html(message: str) -> str:
@@ -419,8 +395,6 @@ def exchange_oauth_code(provider: str, code: str, redirect_uri: str) -> dict:
         "code": code,
         "redirect_uri": redirect_uri,
     }
-    if provider == "naver":
-        form["state"] = ""
     token = post_form_json(config["tokenUrl"], form)
     access_token = token.get("access_token")
     if not access_token:
@@ -431,10 +405,6 @@ def exchange_oauth_code(provider: str, code: str, redirect_uri: str) -> dict:
 def extract_oauth_email(provider: str, profile: dict) -> str:
     if provider == "google":
         return normalize_email(profile.get("email", ""))
-    if provider == "kakao":
-        return normalize_email((profile.get("kakao_account") or {}).get("email", ""))
-    if provider == "naver":
-        return normalize_email((profile.get("response") or {}).get("email", ""))
     return ""
 
 

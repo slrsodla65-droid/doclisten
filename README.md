@@ -99,14 +99,12 @@ DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원 · 카카오톡 베타 신청
 
 ## 소셜 로그인
 
-Google, 카카오, 네이버 OAuth 로그인 버튼이 준비되어 있습니다. 실제 사용하려면 각 개발자 콘솔에서 앱을 만들고 Render Secret 환경변수에 키를 넣습니다.
+Google OAuth 로그인만 사용합니다. 카카오/네이버 소셜 로그인은 현재 비활성화되어 있습니다.
 
-공통 리다이렉트 URI:
+리다이렉트 URI:
 
 ```text
 https://doclisten.app/api/oauth/callback/google
-https://doclisten.app/api/oauth/callback/kakao
-https://doclisten.app/api/oauth/callback/naver
 ```
 
 필요 환경변수:
@@ -115,8 +113,4 @@ https://doclisten.app/api/oauth/callback/naver
 DOC_LISTEN_BASE_URL=https://doclisten.app
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-KAKAO_REST_API_KEY=...
-KAKAO_CLIENT_SECRET=...
-NAVER_CLIENT_ID=...
-NAVER_CLIENT_SECRET=...
 ```

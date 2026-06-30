@@ -144,19 +144,27 @@ def test_oauth_provider_config_uses_environment(monkeypatch):
     assert "accounts.google.com" in config["authorizeUrl"]
 
 
-def test_build_oauth_authorize_url_contains_redirect_and_state(monkeypatch):
-    monkeypatch.setenv("KAKAO_REST_API_KEY", "kakao-id")
-    monkeypatch.setenv("KAKAO_CLIENT_SECRET", "kakao-secret")
+def test_build_google_oauth_authorize_url_contains_redirect_and_state(monkeypatch):
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "google-id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "google-secret")
 
-    url = build_oauth_authorize_url("kakao", "https://doclisten.app/api/oauth/callback/kakao", "state-123")
+    url = build_oauth_authorize_url("google", "https://doclisten.app/api/oauth/callback/google", "state-123")
 
-    assert "kauth.kakao.com/oauth/authorize" in url
-    assert "client_id=kakao-id" in url
+    assert "accounts.google.com/o/oauth2/v2/auth" in url
+    assert "client_id=google-id" in url
     assert "state=state-123" in url
-    assert "redirect_uri=https%3A%2F%2Fdoclisten.app%2Fapi%2Foauth%2Fcallback%2Fkakao" in url
+    assert "redirect_uri=https%3A%2F%2Fdoclisten.app%2Fapi%2Foauth%2Fcallback%2Fgoogle" in url
 
 
 def test_extract_oauth_email_by_provider():
     assert extract_oauth_email("google", {"email": "User@Example.com"}) == "user@example.com"
-    assert extract_oauth_email("kakao", {"kakao_account": {"email": "kakao@example.com"}}) == "kakao@example.com"
-    assert extract_oauth_email("naver", {"response": {"email": "naver@example.com"}}) == "naver@example.com"
+
+
+def test_non_google_oauth_providers_are_disabled(monkeypatch):
+    monkeypatch.setenv("KAKAO_REST_API_KEY", "kakao-id")
+    monkeypatch.setenv("KAKAO_CLIENT_SECRET", "kakao-secret")
+    monkeypatch.setenv("NAVER_CLIENT_ID", "naver-id")
+    monkeypatch.setenv("NAVER_CLIENT_SECRET", "naver-secret")
+
+    assert oauth_provider_config("kakao") == {}
+    assert oauth_provider_config("naver") == {}
