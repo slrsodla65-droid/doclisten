@@ -195,6 +195,15 @@ def init_sqlite_user_store(path: Path = USER_STORE):
             )
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS beta_codes (
+                code TEXT PRIMARY KEY,
+                email TEXT NOT NULL,
+                used_at TEXT NOT NULL
+            )
+            """
+        )
         columns = {row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()}
         if "activated_code" not in columns:
             conn.execute("ALTER TABLE users ADD COLUMN activated_code TEXT")
@@ -224,7 +233,7 @@ def sqlite_row_to_user(row: sqlite3.Row) -> dict:
 
 
 def empty_user_store() -> dict:
-    return {"users": {}}
+    return {"users": {}, "usedBetaCodes": {}}
 
 
 def load_user_store(path: Path = USER_STORE) -> dict:
@@ -234,7 +243,11 @@ def load_user_store(path: Path = USER_STORE) -> dict:
         with sqlite3.connect(path) as conn:
             conn.row_factory = sqlite3.Row
             rows = conn.execute("SELECT * FROM users").fetchall()
-        return {"users": {row["token"]: sqlite_row_to_user(row) for row in rows}}
+            code_rows = conn.execute("SELECT * FROM beta_codes").fetchall()
+        return {
+            "users": {row["token"]: sqlite_row_to_user(row) for row in rows},
+            "usedBetaCodes": {row["code"]: {"email": row["email"], "usedAt": row["used_at"]} for row in code_rows},
+        }
     if not path.exists():
         return empty_user_store()
     try:
@@ -243,6 +256,8 @@ def load_user_store(path: Path = USER_STORE) -> dict:
         return empty_user_store()
     if not isinstance(data, dict) or not isinstance(data.get("users"), dict):
         return empty_user_store()
+    if not isinstance(data.get("usedBetaCodes"), dict):
+        data["usedBetaCodes"] = {}
     return data
 
 
@@ -251,6 +266,7 @@ def save_user_store(data: dict, path: Path = USER_STORE):
     if is_sqlite_user_store(path):
         init_sqlite_user_store(path)
         users = data.get("users", {}) if isinstance(data, dict) else {}
+        used_codes = data.get("usedBetaCodes", {}) if isinstance(data, dict) else {}
         with sqlite3.connect(path) as conn:
             conn.execute("DELETE FROM users")
             conn.executemany(
@@ -274,6 +290,21 @@ def save_user_store(data: dict, path: Path = USER_STORE):
                     )
                     for token, user in users.items()
                     if is_valid_email(user.get("email", ""))
+                ],
+            )
+            conn.execute("DELETE FROM beta_codes")
+            conn.executemany(
+                """
+                INSERT INTO beta_codes (code, email, used_at) VALUES (?, ?, ?)
+                """,
+                [
+                    (
+                        str(code),
+                        normalize_email(item.get("email", "")),
+                        item.get("usedAt") or datetime.now(timezone.utc).isoformat(),
+                    )
+                    for code, item in used_codes.items()
+                    if str(code).strip() and is_valid_email(item.get("email", ""))
                 ],
             )
             conn.commit()
@@ -453,9 +484,17 @@ def mark_user_paid_with_code(token: str, code: str, path: Path = USER_STORE) -> 
         if not user:
             return {"ok": False, "reason": "not-authenticated"}
         if one_time_codes:
-            for existing_user in data["users"].values():
-                if existing_user.get("activatedCode") == submitted_code and existing_user.get("email") != user.get("email"):
-                    return {"ok": False, "reason": "code-already-used"}
+            used_codes = data.setdefault("usedBetaCodes", {})
+            existing_use = used_codes.get(submitted_code)
+            if existing_use and existing_use.get("email") != user.get("email"):
+                return {"ok": False, "reason": "code-already-used"}
+            if user.get("activatedCode") and user.get("activatedCode") != submitted_code:
+                return {"ok": False, "reason": "code-already-used"}
+            if not existing_use:
+                used_codes[submitted_code] = {
+                    "email": user.get("email", ""),
+                    "usedAt": datetime.now(timezone.utc).isoformat(),
+                }
             user["activatedCode"] = submitted_code
         user["plan"] = "beta-pro"
         user["activatedAt"] = datetime.now(timezone.utc).isoformat()

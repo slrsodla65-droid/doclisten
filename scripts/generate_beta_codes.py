@@ -26,7 +26,14 @@ def main() -> None:
     if args.length < 6:
         raise SystemExit("length must be at least 6")
 
-    codes = [generate_code(args.prefix, args.length) for _ in range(args.count)]
+    codes = []
+    seen = set()
+    while len(codes) < args.count:
+        code = generate_code(args.prefix, args.length)
+        if code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
     print(",".join(codes))
 
 

@@ -78,6 +78,8 @@ DOC_LISTEN_BETA_ACCESS_CODES=...
 DOC_LISTEN_USER_STORE_PATH=/var/data/doclisten/users.sqlite3
 ```
 
+중요: 실제 유료 사용자를 받기 전에는 위 영속 저장소 설정을 완료하는 것을 권장합니다. 저장소가 초기화되면 Beta Pro 전환 상태와 1회용 코드 사용 이력도 함께 사라질 수 있습니다.
+
 주의: Render Disk는 비용이 발생할 수 있으므로 운영자 승인 후 켭니다.
 
 ## 고객 응대 문구
