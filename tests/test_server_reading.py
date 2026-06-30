@@ -164,6 +164,38 @@ def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
     assert activation["reason"] == "invalid-code"
 
 
+def test_sqlite_user_store_persists_usage_and_beta_plan(tmp_path, monkeypatch):
+    store = tmp_path / "users.sqlite3"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
+
+    user = get_or_create_user("paid@example.com", store, auth_provider="google")
+    first = record_listen_usage(user["token"], store, "2026-06-30", limit=2)
+    activation = mark_user_paid_with_code(user["token"], "PAID-1234", store)
+    status = get_or_create_user("paid@example.com", store, auth_provider="google")
+    after = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+
+    assert store.exists()
+    assert store.read_bytes().startswith(b"SQLite format 3")
+    assert first["allowed"] is True
+    assert activation["ok"] is True
+    assert activation["user"]["plan"] == "beta-pro"
+    assert status["plan"] == "beta-pro"
+    assert after["allowed"] is True
+    assert after["usage"]["used"] == 2
+
+
+def test_sqlite_user_store_admin_promotion_requires_google_oauth(tmp_path, monkeypatch):
+    store = tmp_path / "users.sqlite3"
+    monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com")
+
+    manual = get_or_create_user("owner@example.com", store)
+    promoted = get_or_create_user("owner@example.com", store, auth_provider="google")
+
+    assert manual["plan"] == "free"
+    assert promoted["token"] == manual["token"]
+    assert promoted["plan"] == "admin"
+
+
 def test_oauth_provider_config_uses_environment(monkeypatch):
     monkeypatch.setenv("GOOGLE_CLIENT_ID", "google-id")
     monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "google-secret")

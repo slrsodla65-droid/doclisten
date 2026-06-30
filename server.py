@@ -5,6 +5,7 @@ import json
 import os
 import re
 import secrets
+import sqlite3
 import threading
 from datetime import datetime, timezone
 import subprocess
@@ -29,7 +30,7 @@ KOREAN_VOICE_NAMES = {v["ShortName"] for v in KOREAN_VOICES}
 CACHE_VERSION = "multilingual-reading-v1"
 RATE_MAP = {"0.8": "-20%", "1": "+0%", "1.0": "+0%", "1.2": "+20%", "1.5": "+50%"}
 DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
-USER_STORE = ROOT / ".doclisten_users.json"
+USER_STORE = Path(os.environ.get("DOC_LISTEN_USER_STORE_PATH", ROOT / ".doclisten_users.json"))
 OAUTH_STATE_STORE = ROOT / ".doclisten_oauth_states.json"
 USER_STORE_LOCK = threading.Lock()
 OAUTH_STATE_LOCK = threading.Lock()
@@ -159,11 +160,63 @@ def sync_admin_plan(user: dict, auth_provider: str = "") -> bool:
     return False
 
 
+def is_sqlite_user_store(path: Path = USER_STORE) -> bool:
+    return Path(path).suffix.lower() in {".db", ".sqlite", ".sqlite3"}
+
+
+def init_sqlite_user_store(path: Path = USER_STORE):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(path) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                token TEXT PRIMARY KEY,
+                email TEXT NOT NULL UNIQUE,
+                plan TEXT NOT NULL DEFAULT 'free',
+                auth_provider TEXT NOT NULL DEFAULT 'manual',
+                usage_json TEXT NOT NULL DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                admin_granted_at TEXT,
+                activated_at TEXT
+            )
+            """
+        )
+        conn.commit()
+
+
+def sqlite_row_to_user(row: sqlite3.Row) -> dict:
+    try:
+        usage = json.loads(row["usage_json"] or "{}")
+    except Exception:
+        usage = {}
+    user = {
+        "email": row["email"],
+        "token": row["token"],
+        "plan": row["plan"] or "free",
+        "authProvider": row["auth_provider"] or "manual",
+        "usage": usage if isinstance(usage, dict) else {},
+        "createdAt": row["created_at"],
+    }
+    if row["admin_granted_at"]:
+        user["adminGrantedAt"] = row["admin_granted_at"]
+    if row["activated_at"]:
+        user["activatedAt"] = row["activated_at"]
+    return user
+
+
 def empty_user_store() -> dict:
     return {"users": {}}
 
 
 def load_user_store(path: Path = USER_STORE) -> dict:
+    path = Path(path)
+    if is_sqlite_user_store(path):
+        init_sqlite_user_store(path)
+        with sqlite3.connect(path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute("SELECT * FROM users").fetchall()
+        return {"users": {row["token"]: sqlite_row_to_user(row) for row in rows}}
     if not path.exists():
         return empty_user_store()
     try:
@@ -176,6 +229,36 @@ def load_user_store(path: Path = USER_STORE) -> dict:
 
 
 def save_user_store(data: dict, path: Path = USER_STORE):
+    path = Path(path)
+    if is_sqlite_user_store(path):
+        init_sqlite_user_store(path)
+        users = data.get("users", {}) if isinstance(data, dict) else {}
+        with sqlite3.connect(path) as conn:
+            conn.execute("DELETE FROM users")
+            conn.executemany(
+                """
+                INSERT INTO users (
+                    token, email, plan, auth_provider, usage_json,
+                    created_at, admin_granted_at, activated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        user.get("token", token),
+                        normalize_email(user.get("email", "")),
+                        user.get("plan", "free"),
+                        user.get("authProvider", "manual"),
+                        json.dumps(user.get("usage") or {}, ensure_ascii=False),
+                        user.get("createdAt") or datetime.now(timezone.utc).isoformat(),
+                        user.get("adminGrantedAt"),
+                        user.get("activatedAt"),
+                    )
+                    for token, user in users.items()
+                    if is_valid_email(user.get("email", ""))
+                ],
+            )
+            conn.commit()
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

@@ -91,7 +91,8 @@ DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원 · 카카오톡 베타 신청
 ## 회원별 사용량 제한
 
 - Google OAuth 로그인으로 사용자를 생성합니다. 직접 이메일 입력 로그인은 관리자 권한 보안을 위해 비활성화되어 있습니다.
-- 서버의 `.doclisten_users.json`에 사용자 토큰, 플랜, 일별 사용량을 저장합니다.
+- 기본값은 서버의 `.doclisten_users.json`에 사용자 토큰, 플랜, 일별 사용량을 저장합니다.
+- `DOC_LISTEN_USER_STORE_PATH=/var/data/doclisten/users.sqlite3`처럼 `.sqlite3` 경로를 지정하면 SQLite 저장소를 사용합니다.
 - Free 사용자는 서버 기준 하루 20문단까지 들을 수 있습니다.
 - 입금 확인 후 운영자가 알려준 베타 코드를 사용자가 입력하면 `beta-pro`로 전환되어 한도가 해제됩니다.
 - 운영자 이메일은 Render 환경변수 `DOC_LISTEN_ADMIN_EMAILS`에 등록하면 Google 로그인으로 인증된 경우에만 `admin` 플랜으로 전환되어 한도 없이 사용할 수 있습니다.
@@ -115,4 +116,5 @@ DOC_LISTEN_BASE_URL=https://doclisten.app
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 DOC_LISTEN_ADMIN_EMAILS=owner@example.com
+DOC_LISTEN_USER_STORE_PATH=/var/data/doclisten/users.sqlite3
 ```
