@@ -66,7 +66,7 @@ doclisten.app
 
 ## 수익화 MVP
 
-- Free: 이메일 로그인 기준 하루 20문단 듣기 체험
+- Free: Google 로그인 기준 하루 20문단 듣기 체험
 - Beta Pro 후보: 월 4,900원, 베타 코드 입력 후 하루 제한 없이 긴 PDF 듣기
 - Credit 후보: 1문서 900원
 - 현재 결제 연결 전 단계이며, 유료 베타 신청은 문의 페이지에서 받습니다.
@@ -90,11 +90,11 @@ DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원 · 카카오톡 베타 신청
 
 ## 회원별 사용량 제한
 
-- 이메일 로그인으로 사용자를 생성합니다.
+- Google OAuth 로그인으로 사용자를 생성합니다. 직접 이메일 입력 로그인은 관리자 권한 보안을 위해 비활성화되어 있습니다.
 - 서버의 `.doclisten_users.json`에 사용자 토큰, 플랜, 일별 사용량을 저장합니다.
 - Free 사용자는 서버 기준 하루 20문단까지 들을 수 있습니다.
 - 입금 확인 후 운영자가 알려준 베타 코드를 사용자가 입력하면 `beta-pro`로 전환되어 한도가 해제됩니다.
-- 운영자 이메일은 Render 환경변수 `DOC_LISTEN_ADMIN_EMAILS`에 등록하면 로그인 즉시 `admin` 플랜으로 전환되어 한도 없이 사용할 수 있습니다.
+- 운영자 이메일은 Render 환경변수 `DOC_LISTEN_ADMIN_EMAILS`에 등록하면 Google 로그인으로 인증된 경우에만 `admin` 플랜으로 전환되어 한도 없이 사용할 수 있습니다.
 - 운영 환경에서는 Render 환경변수 `DOC_LISTEN_BETA_ACCESS_CODE`를 Secret으로 설정합니다.
 
 

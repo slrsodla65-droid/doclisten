@@ -169,6 +169,9 @@ test('only Google social login button is present', () => {
 
   assert.match(html, /Google로 계속하기/);
   assert.match(html, /\/api\/oauth\/start\?provider=google/);
+  assert.doesNotMatch(html, /이메일 로그인/);
+  assert.doesNotMatch(html, /id="emailInput"/);
+  assert.doesNotMatch(html, /id="loginBtn"/);
   assert.doesNotMatch(html, /카카오로 계속하기/);
   assert.doesNotMatch(html, /네이버로 계속하기/);
   assert.doesNotMatch(html, /\/api\/oauth\/start\?provider=kakao/);

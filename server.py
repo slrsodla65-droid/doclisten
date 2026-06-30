@@ -73,10 +73,7 @@ class Handler(SimpleHTTPRequestHandler):
             length = int(self.headers.get("content-length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
             if path == "/api/login":
-                email = str(payload.get("email", "")).strip().lower()
-                if not is_valid_email(email):
-                    return self.send_json({"ok": False, "reason": "invalid-email"}, status=400)
-                return self.send_json({"ok": True, "user": get_or_create_user(email)})
+                return self.send_json({"ok": False, "reason": "google-login-required"}, status=410)
             if path == "/api/listen":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 return self.send_json(record_listen_usage(token))
@@ -154,8 +151,8 @@ def is_admin_email(email: str) -> bool:
     return normalize_email(email) in admin_emails()
 
 
-def sync_admin_plan(user: dict) -> bool:
-    if is_admin_email(user.get("email", "")) and user.get("plan") != "admin":
+def sync_admin_plan(user: dict, auth_provider: str = "") -> bool:
+    if auth_provider == "google" and is_admin_email(user.get("email", "")) and user.get("plan") != "admin":
         user["plan"] = "admin"
         user["adminGrantedAt"] = datetime.now(timezone.utc).isoformat()
         return True
@@ -235,7 +232,7 @@ def public_user(user: dict) -> dict:
     }
 
 
-def get_or_create_user(email: str, path: Path = USER_STORE) -> dict:
+def get_or_create_user(email: str, path: Path = USER_STORE, auth_provider: str = "") -> dict:
     email = normalize_email(email)
     if not is_valid_email(email):
         raise ValueError("invalid email")
@@ -243,14 +240,15 @@ def get_or_create_user(email: str, path: Path = USER_STORE) -> dict:
         data = load_user_store(path)
         for user in data["users"].values():
             if user.get("email") == email:
-                if sync_admin_plan(user):
+                if sync_admin_plan(user, auth_provider):
                     save_user_store(data, path)
                 return public_user(user)
         token = secrets.token_urlsafe(24)
         data["users"][token] = {
             "email": email,
             "token": token,
-            "plan": "admin" if is_admin_email(email) else "free",
+            "plan": "admin" if auth_provider == "google" and is_admin_email(email) else "free",
+            "authProvider": auth_provider or "manual",
             "usage": {},
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }
@@ -439,7 +437,7 @@ def finish_oauth_flow(handler, provider: str, query: dict):
         email = extract_oauth_email(provider, profile)
         if not is_valid_email(email):
             return handler.send_html(oauth_error_html("소셜 계정에서 이메일을 확인할 수 없습니다. 이메일 제공 권한을 허용해주세요."), status=400)
-        user = get_or_create_user(email)
+        user = get_or_create_user(email, auth_provider=provider)
         return handler.send_html(oauth_success_html(user))
     except Exception as exc:
         return handler.send_html(oauth_error_html(f"소셜 로그인 처리 중 오류가 발생했습니다: {str(exc)}"), status=500)

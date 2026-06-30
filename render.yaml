@@ -17,7 +17,7 @@ services:
       # 입금 확인 후 유료 해제에 사용할 코드는 Render 대시보드에서 Secret 환경변수로 설정합니다.
       # - key: DOC_LISTEN_BETA_ACCESS_CODE
       #   sync: false
-      # 운영자 이메일은 로그인 즉시 admin 플랜으로 전환됩니다. 여러 개는 쉼표로 구분합니다.
+      # 운영자 이메일은 Google 로그인으로 인증된 경우에만 admin 플랜으로 전환됩니다. 여러 개는 쉼표로 구분합니다.
       # - key: DOC_LISTEN_ADMIN_EMAILS
       #   sync: false
       # Google 로그인 키는 Render 대시보드에서 Secret 환경변수로 설정합니다.

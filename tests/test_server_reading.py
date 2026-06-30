@@ -122,13 +122,16 @@ def test_paid_user_bypasses_free_limit_after_beta_code(tmp_path, monkeypatch):
         assert result["usage"]["plan"] == "beta-pro"
 
 
-def test_admin_email_gets_unlimited_admin_plan(tmp_path, monkeypatch):
+def test_admin_email_gets_unlimited_admin_plan_only_after_google_oauth(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
     monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com, other@example.com")
 
-    user = get_or_create_user("Owner@Example.com", store)
+    manual_user = get_or_create_user("Owner@Example.com", store)
+    user = get_or_create_user("Owner@Example.com", store, auth_provider="google")
 
     assert is_admin_email("owner@example.com") is True
+    assert manual_user["plan"] == "free"
+    assert user["token"] == manual_user["token"]
     assert user["plan"] == "admin"
     for _ in range(5):
         result = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
@@ -136,14 +139,16 @@ def test_admin_email_gets_unlimited_admin_plan(tmp_path, monkeypatch):
         assert result["usage"]["plan"] == "admin"
 
 
-def test_existing_free_user_is_promoted_when_email_becomes_admin(tmp_path, monkeypatch):
+def test_existing_free_user_is_promoted_when_google_email_becomes_admin(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
     user = get_or_create_user("owner@example.com", store)
     assert user["plan"] == "free"
 
     monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com")
-    promoted = get_or_create_user("owner@example.com", store)
+    still_manual = get_or_create_user("owner@example.com", store)
+    promoted = get_or_create_user("owner@example.com", store, auth_provider="google")
 
+    assert still_manual["plan"] == "free"
     assert promoted["token"] == user["token"]
     assert promoted["plan"] == "admin"
 

@@ -35,8 +35,6 @@ const els = {
   paywallNotice: document.querySelector('#paywallNotice'),
   paymentLinks: document.querySelectorAll('[data-payment-cta]'),
   priceLabels: document.querySelectorAll('[data-beta-price-label]'),
-  emailInput: document.querySelector('#emailInput'),
-  loginBtn: document.querySelector('#loginBtn'),
   betaCodeInput: document.querySelector('#betaCodeInput'),
   activateBtn: document.querySelector('#activateBtn'),
   accountMessage: document.querySelector('#accountMessage'),
@@ -103,7 +101,6 @@ function applyServerStatus(payload) {
     state.user = payload.user;
     state.token = payload.user.token || state.token;
     localStorage.setItem('doclisten-user-token', state.token);
-    if (els.emailInput) els.emailInput.value = payload.user.email || '';
   }
   if (payload?.usage) {
     state.serverUsage = payload.usage;
@@ -127,31 +124,10 @@ async function refreshAccountStatus() {
   }
 }
 
-async function loginWithEmail() {
-  const email = els.emailInput?.value?.trim();
-  if (!email) {
-    setAccountMessage('이메일을 입력해주세요.');
-    return;
-  }
-  const response = await fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  const payload = await response.json();
-  if (!response.ok || !payload.ok) {
-    setAccountMessage('이메일 형식을 확인해주세요.');
-    return;
-  }
-  applyServerStatus({ user: payload.user, usage: payload.usage });
-  await refreshAccountStatus();
-  setAccountMessage('로그인 완료. 이제 사용량이 서버에 저장됩니다.');
-}
-
 async function activateBetaCode() {
   const code = els.betaCodeInput?.value?.trim();
   if (!state.token) {
-    setAccountMessage('먼저 이메일로 로그인해주세요.');
+    setAccountMessage('먼저 Google로 로그인해주세요.');
     return;
   }
   if (!code) {
@@ -177,7 +153,7 @@ function updateUsageUi() {
   if (els.planLabel) els.planLabel.textContent = usage.plan === 'free' ? 'Free 체험' : 'Beta Pro';
   if (els.usageLabel) {
     if (!state.token) {
-      els.usageLabel.textContent = `이메일 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
+      els.usageLabel.textContent = `Google 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
     } else if (usage.plan === 'free') {
       els.usageLabel.textContent = `서버 저장 사용량: 오늘 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`;
     } else {
@@ -189,8 +165,7 @@ function updateUsageUi() {
 
 async function consumeListeningCredit() {
   if (!state.token) {
-    setAccountMessage('무료 사용량 관리를 위해 먼저 이메일 로그인을 해주세요.');
-    els.emailInput?.focus();
+    setAccountMessage('무료 사용량 관리를 위해 먼저 Google 로그인을 해주세요.');
     return false;
   }
   try {
@@ -562,10 +537,6 @@ window.addEventListener('visibilitychange', () => {
   void syncWakeLock();
 });
 
-els.loginBtn?.addEventListener('click', () => {
-  void loginWithEmail();
-});
-
 els.activateBtn?.addEventListener('click', () => {
   void activateBetaCode();
 });
@@ -574,9 +545,6 @@ window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
-if (els.emailInput && localStorage.getItem('doclisten-user-email')) {
-  els.emailInput.value = localStorage.getItem('doclisten-user-email');
-}
 void loadPaymentConfig();
 void refreshAccountStatus();
 updateControls();
