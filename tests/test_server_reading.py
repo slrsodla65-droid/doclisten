@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -164,15 +164,23 @@ def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
     assert activation["reason"] == "invalid-code"
 
 
-def test_logout_revokes_token_without_deleting_account(tmp_path):
+def test_logout_revokes_token_without_deleting_account(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
     user = get_or_create_user("logout@example.com", store, auth_provider="google")
+    record_listen_usage(user["token"], store, "2026-06-30", limit=20)
+    mark_user_paid_with_code(user["token"], "PAID-1234", store)
 
     revoked = revoke_user_token(user["token"], store)
+    renewed = get_or_create_user("logout@example.com", store, auth_provider="google")
+    _, renewed_user = find_user_by_token(renewed["token"], store)
+    usage = create_usage_snapshot(renewed_user, "2026-06-30", limit=20)
 
     assert revoked["ok"] is True
     assert get_user_status(user["token"], store)["ok"] is False
-    assert get_or_create_user("logout@example.com", store, auth_provider="google")["token"] != user["token"]
+    assert renewed["token"] != user["token"]
+    assert renewed["plan"] == "beta-pro"
+    assert usage["used"] == 1
 
 
 def test_delete_account_removes_user_and_usage(tmp_path):
@@ -184,7 +192,41 @@ def test_delete_account_removes_user_and_usage(tmp_path):
 
     assert deleted["ok"] is True
     assert deleted["deleted"] is True
+    assert "email" not in deleted
     assert get_user_status(user["token"], store)["ok"] is False
+
+
+def test_free_limit_is_not_reset_by_logout_and_google_relogin(tmp_path):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("limit@example.com", store, auth_provider="google")
+    first = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+    blocked_before = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+
+    revoke_user_token(user["token"], store)
+    renewed = get_or_create_user("limit@example.com", store, auth_provider="google")
+    blocked_after = record_listen_usage(renewed["token"], store, "2026-06-30", limit=1)
+
+    assert first["allowed"] is True
+    assert blocked_before["allowed"] is False
+    assert blocked_after["allowed"] is False
+    assert blocked_after["usage"]["used"] == 1
+
+
+def test_sqlite_logout_preserves_plan_and_usage(tmp_path, monkeypatch):
+    store = tmp_path / "users.sqlite3"
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
+    user = get_or_create_user("sqlite-logout@example.com", store, auth_provider="google")
+    record_listen_usage(user["token"], store, "2026-06-30", limit=20)
+    mark_user_paid_with_code(user["token"], "PAID-1234", store)
+
+    revoke_user_token(user["token"], store)
+    renewed = get_or_create_user("sqlite-logout@example.com", store, auth_provider="google")
+    _, renewed_user = find_user_by_token(renewed["token"], store)
+    usage = create_usage_snapshot(renewed_user, "2026-06-30", limit=20)
+
+    assert renewed["token"] != user["token"]
+    assert renewed["plan"] == "beta-pro"
+    assert usage["used"] == 1
 
 
 def test_sqlite_user_store_persists_usage_and_beta_plan(tmp_path, monkeypatch):

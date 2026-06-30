@@ -141,7 +141,12 @@ async function refreshAccountStatus() {
   try {
     const response = await fetch('/api/me', { headers: authHeaders(), cache: 'no-store' });
     const payload = await response.json();
-    if (payload.ok) applyServerStatus(payload);
+    if (payload.ok) {
+      applyServerStatus(payload);
+      return;
+    }
+    clearLocalAccountState();
+    setAccountMessage('로그인 세션이 만료되었습니다. 다시 Google로 로그인해주세요.');
   } catch (error) {
     console.debug('Account status unavailable', error);
   }

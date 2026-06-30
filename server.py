@@ -76,7 +76,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"ok": False, "reason": "google-login-required"}, status=410)
         try:
             length = int(self.headers.get("content-length", "0"))
-            payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+            try:
+                payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+            except json.JSONDecodeError:
+                return self.send_json({"ok": False, "reason": "invalid-json"}, status=400)
             if path == "/api/listen":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 return self.send_json(record_listen_usage(token))
@@ -380,9 +383,16 @@ def revoke_user_token(token: str, path: Path = USER_STORE) -> dict:
         data, user = find_user_by_token(token, path)
         if not user:
             return {"ok": False, "reason": "not-authenticated"}
-        removed = data["users"].pop(str(token or ""), None)
+        old_token = str(token or "")
+        new_token = secrets.token_urlsafe(24)
+        while new_token in data["users"]:
+            new_token = secrets.token_urlsafe(24)
+        data["users"].pop(old_token, None)
+        user["token"] = new_token
+        user["lastLogoutAt"] = datetime.now(timezone.utc).isoformat()
+        data["users"][new_token] = user
         save_user_store(data, path)
-        return {"ok": True, "revoked": bool(removed)}
+        return {"ok": True, "revoked": True}
 
 
 def delete_user_account(token: str, path: Path = USER_STORE) -> dict:
@@ -395,7 +405,7 @@ def delete_user_account(token: str, path: Path = USER_STORE) -> dict:
         for item_token in tokens_to_delete:
             data["users"].pop(item_token, None)
         save_user_store(data, path)
-        return {"ok": True, "deleted": True, "email": email}
+        return {"ok": True, "deleted": True}
 
 
 def record_listen_usage(token: str, path: Path = USER_STORE, day: str | None = None, limit: int | None = None) -> dict:
