@@ -183,6 +183,8 @@ test('server audiobook mode declares production dependencies and fallback-safe p
   assert.match(app, /gtts-ko-human/);
   assert.match(app, /playServerNarration/);
   assert.match(app, /fallbackToBrowserSpeech/);
+  assert.match(app, /audio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
+  assert.match(app, /state\.currentAudio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
   assert.match(requirements, /^gTTS/m);
 });
 

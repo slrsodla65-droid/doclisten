@@ -194,6 +194,24 @@ def test_existing_free_user_is_promoted_when_google_email_becomes_admin(tmp_path
     assert promoted["plan"] == "admin"
 
 
+def test_existing_google_user_becomes_unlimited_admin_without_relogin(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("owner@example.com", store, auth_provider="google")
+    assert user["plan"] == "free"
+    record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+    blocked_before = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+    assert blocked_before["allowed"] is False
+
+    monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com")
+    status = get_user_status(user["token"], store)
+    after_admin = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+
+    assert status["user"]["plan"] == "admin"
+    assert status["usage"]["remaining"] is None
+    assert after_admin["allowed"] is True
+    assert after_admin["usage"]["plan"] == "admin"
+
+
 def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
     store = tmp_path / "users.json"
     monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")

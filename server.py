@@ -434,10 +434,13 @@ def create_usage_snapshot(user: dict | None, day: str | None = None, limit: int 
 
 
 def get_user_status(token: str, path: Path = USER_STORE) -> dict:
-    _, user = find_user_by_token(token, path)
-    if not user:
-        return {"ok": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None)}
-    return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
+    with USER_STORE_LOCK:
+        data, user = find_user_by_token(token, path)
+        if not user:
+            return {"ok": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None)}
+        if sync_admin_plan(user, user.get("authProvider", "")):
+            save_user_store(data, path)
+        return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
 
 
 def revoke_user_token(token: str, path: Path = USER_STORE) -> dict:
@@ -477,6 +480,8 @@ def record_listen_usage(token: str, path: Path = USER_STORE, day: str | None = N
         data, user = find_user_by_token(token, path)
         if not user:
             return {"allowed": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None, day, limit)}
+        if sync_admin_plan(user, user.get("authProvider", "")):
+            save_user_store(data, path)
         usage = create_usage_snapshot(user, day, limit)
         if user.get("plan", "free") == "free" and usage["reached"]:
             return {"allowed": False, "reason": "free-daily-limit", "usage": usage, "user": public_user(user)}

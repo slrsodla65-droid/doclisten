@@ -582,6 +582,7 @@ async function playServerNarration(block, runId) {
   releaseCurrentAudio();
   const audioUrl = URL.createObjectURL(blob);
   const audio = new Audio(audioUrl);
+  audio.playbackRate = Number(els.rateSelect.value || 1);
   state.currentAudioUrl = audioUrl;
   state.currentAudio = audio;
 
@@ -680,6 +681,12 @@ els.pauseBtn.addEventListener('click', () => {
     state.paused = true;
   }
   updateControls();
+});
+
+els.rateSelect.addEventListener('change', () => {
+  if (state.currentAudio) {
+    state.currentAudio.playbackRate = Number(els.rateSelect.value || 1);
+  }
 });
 
 els.nextBlockBtn.addEventListener('click', async () => {
