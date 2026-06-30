@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, concat_mp3, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, make_silence_mp3, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -56,6 +56,20 @@ def test_split_for_human_reading_separates_sentence_and_clause_pauses():
         "그리고 이어듣기.",
         "마지막으로 사용량 제한입니다.",
     ]
+
+
+def test_embedded_silence_and_concat_work_without_system_ffmpeg(tmp_path, monkeypatch):
+    monkeypatch.setattr("server.shutil.which", lambda _: None)
+    first = tmp_path / "first.mp3"
+    silence = tmp_path / "silence.mp3"
+    out = tmp_path / "out.mp3"
+    first.write_bytes(b"ID3first")
+
+    make_silence_mp3(silence, 520)
+    concat_mp3([first, silence], out)
+
+    assert silence.read_bytes().startswith(b"ID3")
+    assert out.read_bytes().startswith(b"ID3firstID3")
 
 
 def test_normalize_tts_pronunciation_applies_reading_script_before_pronunciation_fix():

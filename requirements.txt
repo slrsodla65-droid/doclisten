@@ -1,2 +1,3 @@
-# DocListen currently uses browser built-in speech synthesis for playback.
-# Keep this file for Render Python service detection.
+# DocListen uses server-side audiobook narration for /api/tts.
+gTTS==2.5.4
+edge-tts==7.2.3

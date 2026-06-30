@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import asyncio
+import base64
 import hashlib
 import json
 import os
 import re
 import secrets
+import shutil
 import sqlite3
 import threading
 from datetime import datetime, timezone
@@ -27,6 +29,10 @@ KOREAN_VOICES = [
     {"ShortName": "ko-KR-SunHiNeural", "Locale": "ko-KR", "FriendlyName": "SunHi 여성"},
 ]
 KOREAN_VOICE_NAMES = {v["ShortName"] for v in KOREAN_VOICES}
+SILENCE_MP3_BASE64 = {
+    280: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAADgAAAhAAaGhoaGhoaHR0dHR0dHSAgICAgICAi4uLi4uLi5eXl5eXl5eioqKioqKirq6urq6urrq6urq6urq6xcXFxcXFxdHR0dHR0dHd3d3d3d3d6Ojo6Ojo6PT09PT09PT/////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAIQ9gcbIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMFVV//MUxAsAAANIAAAAAFVVVVVVVVVVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV",
+    520: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAAGAAAAwAASEhISFBQUFBYWFhYYGBgYGhoaGhwcHBweHh4eHiAgICAiIiIiJCQkJCYmJiYoKCgoKioqKiosLCwsLi4uLjAwMDAyMjIyNDQ0NDY2NjY2ODg4ODo6Ojo8PDw8Pj4+Pj/////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAMAvyaQwgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMExB//MUxAsAAANIAAAAAE1FMy4xMDBVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV//MUxJoAAANIAAAAAFVVVVVVVVVVVVVV//MUxKUAAANIAAAAAFVVVVVVVVVVVVVV//MUxLAAAANIAAAAAFVVVVVVVVVVVVVV//MUxLsAAANIAAAAAFVVVVVVVVVVVVVV//MUxMYAAANIAAAAAFVVVVVVVVVVVVVV//MUxNEAAANIAAAAAFVVVVVVVVVVVVVV//MUxNwAAANIAAAAAFVVVVVVVVVVVVVV//MUxOcAAANIAAAAAFVVVVVVVVVVVVVV//MUxPIAAANIAAAAAFVVVVVVVVVVVVVV//MUxPQAAANIAAAAAFVVVVVVVVVVVVVV",
+}
 CACHE_VERSION = "audiobook-reading-v2"
 RATE_MAP = {
     "0.5": "-50%",
@@ -853,14 +859,23 @@ def split_for_human_reading(text: str) -> list[str]:
 
 def make_silence_mp3(path: Path, ms: int):
     seconds = max(0.08, ms / 1000)
-    subprocess.run([
-        "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
-        "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
-        "-t", f"{seconds:.3f}", "-q:a", "9", "-acodec", "libmp3lame", str(path)
-    ], check=True)
+    if shutil.which("ffmpeg"):
+        subprocess.run([
+            "ffmpeg", "-y", "-hide_banner", "-loglevel", "error",
+            "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+            "-t", f"{seconds:.3f}", "-q:a", "9", "-acodec", "libmp3lame", str(path)
+        ], check=True)
+        return
+    nearest = 520 if ms >= 400 else 280
+    path.write_bytes(base64.b64decode(SILENCE_MP3_BASE64[nearest]))
 
 
 def concat_mp3(files: list[Path], out: Path):
+    if not shutil.which("ffmpeg"):
+        with out.open("wb") as target:
+            for file in files:
+                target.write(file.read_bytes())
+        return
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as f:
         list_path = Path(f.name)
         for file in files:
