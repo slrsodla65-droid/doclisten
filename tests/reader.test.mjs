@@ -164,6 +164,17 @@ test('payment CTAs can be converted to payment links from server config', () => 
 });
 
 
+test('render config documents persistent SQLite path without enabling paid disk by default', () => {
+  const renderConfig = readFileSync(new URL('../render.yaml', import.meta.url), 'utf8');
+
+  assert.match(renderConfig, /SQLite 저장소/);
+  assert.match(renderConfig, /# - key: DOC_LISTEN_USER_STORE_PATH/);
+  assert.match(renderConfig, /#   value: \/var\/data\/doclisten\/users\.sqlite3/);
+  assert.doesNotMatch(renderConfig, /^\s*disk:\s*$/m);
+  assert.doesNotMatch(renderConfig, /^\s*disks:\s*$/m);
+});
+
+
 test('only Google social login button is present with clear account controls', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
