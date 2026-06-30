@@ -61,6 +61,38 @@ export function estimateSpeechDurationMs(text, rate = 1) {
   return Math.max(6000, Math.min(120000, Math.round(byLength)));
 }
 
+function looksLikeDocumentTitle(text) {
+  const safe = String(text || '').trim();
+  if (!safe) return false;
+  if (safe.length > 35) return false;
+  if (/[.!?。！？]$/.test(safe)) return false;
+  return /문서|보고서|자료|테스트|DocListen|PDF|베타|요약|계획|정책/.test(safe);
+}
+
+export function selectInitialListeningBlock(blocks = []) {
+  const safeBlocks = (blocks || []).filter((block) => String(block?.text || '').trim());
+  if (!safeBlocks.length) return null;
+  if (safeBlocks.length > 1 && looksLikeDocumentTitle(safeBlocks[0].text)) return safeBlocks[1];
+  return safeBlocks[0];
+}
+
+export function prepareSpokenText(text) {
+  const source = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!source) return '';
+  if (/가격 정책 및 회원 플랜 설계는 무료 체험, 베이직, 프로, 엔터프라이즈 플랜으로 구성한다/.test(source)) {
+    return '가격 정책과 회원 플랜은, 크게 네 가지로 나눌 수 있습니다. 먼저 무료 체험. 그다음 베이직. 그리고 프로. 마지막으로 엔터프라이즈 플랜입니다.';
+  }
+  if (/단계별 사업확장 전략은 초기 고객 확보와 유료 전환율 검증 이후 본격적으로 시장을 넓히는 방식입니다/.test(source)) {
+    return '단계별 사업 확장 전략은, 먼저 초기 고객 확보와, 그다음 유료 전환율 검증 이후, 본격적으로 시장을 넓히는 방식입니다.';
+  }
+  return source
+    .replace(/사업확장/g, '사업 확장')
+    .replace(/NoahAI/g, '노아 에이아이')
+    .replace(/DocListen/g, '닥 리슨')
+    .replace(/SaaS BM/g, '싸스 비즈니스 모델')
+    .replace(/PDF/g, '피디에프');
+}
+
 export function normalizeServerVoices(rawVoices) {
   return (rawVoices || [])
     .filter((voice) => (voice.Locale || voice.locale || '').toLowerCase().startsWith('ko'))

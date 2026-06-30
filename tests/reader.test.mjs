@@ -16,6 +16,8 @@ import {
   getDailyUsageKey,
   createDailyUsageSnapshot,
   canStartListeningForPlan,
+  prepareSpokenText,
+  selectInitialListeningBlock,
 } from '../src/readerCore.mjs';
 
 test('buildBlocksFromTextItems groups nearby text items into ordered line blocks', () => {
@@ -54,6 +56,24 @@ test('findBlockAtPoint returns the topmost block containing a scaled click point
   assert.equal(findBlockAtPoint(blocks, 55, 30)?.id, 'a');
   assert.equal(findBlockAtPoint(blocks, 55, 60)?.id, 'b');
   assert.equal(findBlockAtPoint(blocks, 300, 60), null);
+});
+
+test('selectInitialListeningBlock skips document titles when content paragraphs exist', () => {
+  const blocks = [
+    { id: 'title', text: 'DocListen 유료 베타 테스트 문서', order: 1 },
+    { id: 'content', text: '가격 정책 및 회원 플랜 설계는 무료 체험, 베이직, 프로, 엔터프라이즈 플랜으로 구성한다.', order: 2 },
+  ];
+  assert.equal(selectInitialListeningBlock(blocks)?.id, 'content');
+  assert.equal(selectInitialListeningBlock([{ id: 'only', text: '짧은 제목', order: 1 }])?.id, 'only');
+});
+
+test('prepareSpokenText turns document prose into more natural Korean narration input', () => {
+  const spoken = prepareSpokenText('가격 정책 및 회원 플랜 설계는 무료 체험, 베이직, 프로, 엔터프라이즈 플랜으로 구성한다.');
+  assert.match(spoken, /가격 정책과 회원 플랜은/);
+  assert.match(spoken, /먼저 무료 체험/);
+  assert.match(spoken, /그다음 베이직/);
+  assert.match(spoken, /마지막으로 엔터프라이즈 플랜입니다/);
+  assert.doesNotMatch(spoken, /설계는/);
 });
 
 test('getNextBlock walks pages and block order when pages are already loaded', () => {

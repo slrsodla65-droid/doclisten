@@ -7,7 +7,9 @@ import {
   getDailyUsageKey,
   createDailyUsageSnapshot,
   canStartListeningForPlan,
-} from './readerCore.mjs?v=34';
+  prepareSpokenText,
+  selectInitialListeningBlock,
+} from './readerCore.mjs?v=35';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -471,7 +473,7 @@ async function renderPage(pageNumber, preferredBlockId = null) {
     els.textOverlay.appendChild(div);
   }
 
-  const target = blocks.find((block) => block.id === preferredBlockId) || blocks[0] || null;
+  const target = blocks.find((block) => block.id === preferredBlockId) || selectInitialListeningBlock(blocks);
   setActiveBlock(target);
 }
 
@@ -510,7 +512,8 @@ async function speakBlock(block) {
   window.speechSynthesis.cancel();
   setActiveBlock(block, { autoScroll: true });
 
-  const utterance = new SpeechSynthesisUtterance(block.text);
+  const spokenText = prepareSpokenText(block.text);
+  const utterance = new SpeechSynthesisUtterance(spokenText);
   utterance.lang = 'ko-KR';
   utterance.rate = Number(els.rateSelect.value || 1);
   utterance.pitch = 1;
