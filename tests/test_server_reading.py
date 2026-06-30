@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, extract_oauth_email, get_or_create_user, get_public_config, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, extract_oauth_email, get_or_create_user, get_public_config, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -120,6 +120,32 @@ def test_paid_user_bypasses_free_limit_after_beta_code(tmp_path, monkeypatch):
         result = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
         assert result["allowed"] is True
         assert result["usage"]["plan"] == "beta-pro"
+
+
+def test_admin_email_gets_unlimited_admin_plan(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com, other@example.com")
+
+    user = get_or_create_user("Owner@Example.com", store)
+
+    assert is_admin_email("owner@example.com") is True
+    assert user["plan"] == "admin"
+    for _ in range(5):
+        result = record_listen_usage(user["token"], store, "2026-06-30", limit=1)
+        assert result["allowed"] is True
+        assert result["usage"]["plan"] == "admin"
+
+
+def test_existing_free_user_is_promoted_when_email_becomes_admin(tmp_path, monkeypatch):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("owner@example.com", store)
+    assert user["plan"] == "free"
+
+    monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com")
+    promoted = get_or_create_user("owner@example.com", store)
+
+    assert promoted["token"] == user["token"]
+    assert promoted["plan"] == "admin"
 
 
 def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):

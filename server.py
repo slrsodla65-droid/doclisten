@@ -145,6 +145,23 @@ def normalize_email(email: str) -> str:
     return str(email or "").strip().lower()
 
 
+def admin_emails() -> set[str]:
+    raw = os.environ.get("DOC_LISTEN_ADMIN_EMAILS", "")
+    return {normalize_email(item) for item in re.split(r"[,\s]+", raw) if is_valid_email(item)}
+
+
+def is_admin_email(email: str) -> bool:
+    return normalize_email(email) in admin_emails()
+
+
+def sync_admin_plan(user: dict) -> bool:
+    if is_admin_email(user.get("email", "")) and user.get("plan") != "admin":
+        user["plan"] = "admin"
+        user["adminGrantedAt"] = datetime.now(timezone.utc).isoformat()
+        return True
+    return False
+
+
 def empty_user_store() -> dict:
     return {"users": {}}
 
@@ -226,12 +243,14 @@ def get_or_create_user(email: str, path: Path = USER_STORE) -> dict:
         data = load_user_store(path)
         for user in data["users"].values():
             if user.get("email") == email:
+                if sync_admin_plan(user):
+                    save_user_store(data, path)
                 return public_user(user)
         token = secrets.token_urlsafe(24)
         data["users"][token] = {
             "email": email,
             "token": token,
-            "plan": "free",
+            "plan": "admin" if is_admin_email(email) else "free",
             "usage": {},
             "createdAt": datetime.now(timezone.utc).isoformat(),
         }
