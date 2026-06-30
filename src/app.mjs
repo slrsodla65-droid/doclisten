@@ -98,11 +98,16 @@ function setAccountMessage(message) {
   if (els.accountMessage) els.accountMessage.textContent = message;
 }
 
+function planDisplayLabel(plan) {
+  if (plan === 'admin') return 'Admin';
+  if (plan === 'beta-pro') return 'Beta Pro';
+  return 'Free';
+}
+
 function updateAccountStatusUi() {
   if (els.accountStatus) {
     if (state.user?.email) {
-      const planLabel = state.plan === 'free' ? 'Free' : state.plan === 'admin' ? 'Admin' : 'Beta Pro';
-      els.accountStatus.textContent = `${state.user.email} · ${planLabel}`;
+      els.accountStatus.textContent = `${state.user.email} · ${planDisplayLabel(state.plan)}`;
     } else {
       els.accountStatus.textContent = '아직 로그인하지 않았습니다.';
     }
@@ -150,7 +155,7 @@ function logout() {
   state.freeListensUsed = 0;
   updateUsageUi();
   updateAccountStatusUi();
-  setAccountMessage('로그아웃했습니다. 다시 사용하려면 Google로 로그인해주세요.');
+  setAccountMessage('이 브라우저에서 로그아웃했습니다. 다시 사용하려면 Google로 로그인해주세요.');
 }
 
 async function activateBetaCode() {
@@ -179,12 +184,14 @@ async function activateBetaCode() {
 
 function updateUsageUi() {
   const usage = state.serverUsage || createDailyUsageSnapshot(state.freeListensUsed, FREE_DAILY_LISTEN_LIMIT);
-  if (els.planLabel) els.planLabel.textContent = usage.plan === 'free' ? 'Free 체험' : 'Beta Pro';
+  if (els.planLabel) els.planLabel.textContent = usage.plan === 'free' ? 'Free 체험' : planDisplayLabel(usage.plan);
   if (els.usageLabel) {
     if (!state.token) {
       els.usageLabel.textContent = `Google 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
     } else if (usage.plan === 'free') {
       els.usageLabel.textContent = `서버 저장 사용량: 오늘 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`;
+    } else if (usage.plan === 'admin') {
+      els.usageLabel.textContent = 'Admin 활성화됨 · 운영자는 하루 제한 없이 사용할 수 있습니다.';
     } else {
       els.usageLabel.textContent = 'Beta Pro 활성화됨 · 하루 제한 없이 사용할 수 있습니다.';
     }

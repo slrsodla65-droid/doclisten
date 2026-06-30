@@ -235,7 +235,9 @@ def test_build_google_oauth_authorize_url_contains_redirect_and_state(monkeypatc
 
 
 def test_extract_oauth_email_by_provider():
-    assert extract_oauth_email("google", {"email": "User@Example.com"}) == "user@example.com"
+    assert extract_oauth_email("google", {"email": "User@Example.com", "email_verified": True}) == "user@example.com"
+    assert extract_oauth_email("google", {"email": "User@Example.com", "email_verified": False}) == ""
+    assert extract_oauth_email("google", {"email": "User@Example.com"}) == ""
 
 
 def test_non_google_oauth_providers_are_disabled(monkeypatch):

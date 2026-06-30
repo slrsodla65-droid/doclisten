@@ -196,7 +196,8 @@ test('only Google social login button is present with clear account controls', (
   assert.match(html, /id="accountStatus"/);
   assert.match(html, /id="logoutBtn"/);
   assert.match(app, /localStorage\.removeItem\('doclisten-user-token'\)/);
-  assert.match(app, /로그아웃/);
+  assert.match(app, /이 브라우저에서 로그아웃/);
+  assert.match(app, /Admin 활성화됨/);
   assert.doesNotMatch(html, /이메일 로그인/);
   assert.doesNotMatch(html, /id="emailInput"/);
   assert.doesNotMatch(html, /id="loginBtn"/);

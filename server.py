@@ -72,11 +72,11 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        if path == "/api/login":
+            return self.send_json({"ok": False, "reason": "google-login-required"}, status=410)
         try:
             length = int(self.headers.get("content-length", "0"))
             payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
-            if path == "/api/login":
-                return self.send_json({"ok": False, "reason": "google-login-required"}, status=410)
             if path == "/api/listen":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 return self.send_json(record_listen_usage(token))
@@ -506,6 +506,8 @@ def exchange_oauth_code(provider: str, code: str, redirect_uri: str) -> dict:
 
 def extract_oauth_email(provider: str, profile: dict) -> str:
     if provider == "google":
+        if profile.get("email_verified") is not True:
+            return ""
         return normalize_email(profile.get("email", ""))
     return ""
 
