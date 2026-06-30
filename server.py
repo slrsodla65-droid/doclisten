@@ -56,6 +56,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"voices": KOREAN_VOICES})
         if path == "/api/config":
             return self.send_json(get_public_config())
+        if path == "/api/health":
+            return self.send_json(get_health_status())
         if path == "/api/me":
             token = self.headers.get("X-DocListen-Token", "")
             return self.send_json(get_user_status(token))
@@ -547,6 +549,17 @@ def get_public_config() -> dict:
         "serverUsage": True,
         "activationEnabled": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
         "socialLoginProviders": configured_social_providers(),
+    }
+
+
+def get_health_status() -> dict:
+    store_path = Path(os.environ.get("DOC_LISTEN_USER_STORE_PATH", USER_STORE))
+    return {
+        "ok": True,
+        "storage": "sqlite" if is_sqlite_user_store(store_path) else "json",
+        "googleOAuthConfigured": bool(os.environ.get("GOOGLE_CLIENT_ID", "").strip() and os.environ.get("GOOGLE_CLIENT_SECRET", "").strip()),
+        "betaActivationConfigured": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
+        "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
     }
 
 

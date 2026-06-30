@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, extract_oauth_email, get_or_create_user, get_public_config, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, extract_oauth_email, get_health_status, get_or_create_user, get_public_config, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -194,6 +194,21 @@ def test_sqlite_user_store_admin_promotion_requires_google_oauth(tmp_path, monke
     assert manual["plan"] == "free"
     assert promoted["token"] == manual["token"]
     assert promoted["plan"] == "admin"
+
+
+def test_health_status_exposes_safe_operational_readiness(tmp_path, monkeypatch):
+    monkeypatch.setenv("DOC_LISTEN_USER_STORE_PATH", str(tmp_path / "users.sqlite3"))
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "google-id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "google-secret")
+    monkeypatch.setenv("DOC_LISTEN_BETA_ACCESS_CODE", "PAID-1234")
+
+    status = get_health_status()
+
+    assert status["ok"] is True
+    assert status["storage"] == "sqlite"
+    assert status["googleOAuthConfigured"] is True
+    assert status["betaActivationConfigured"] is True
+    assert "secret" not in str(status).lower()
 
 
 def test_oauth_provider_config_uses_environment(monkeypatch):
