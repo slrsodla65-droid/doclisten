@@ -160,4 +160,5 @@ test('payment CTAs can be converted to payment links from server config', () => 
   assert.match(html, /data-payment-cta/);
   assert.match(html, /data-beta-price-label/);
   assert.match(app, /fetch\('\/api\/config'/);
+  assert.match(app, /카카오톡으로 베타 신청/);
 });

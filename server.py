@@ -24,6 +24,7 @@ KOREAN_VOICES = [
 KOREAN_VOICE_NAMES = {v["ShortName"] for v in KOREAN_VOICES}
 CACHE_VERSION = "multilingual-reading-v1"
 RATE_MAP = {"0.8": "-20%", "1": "+0%", "1.0": "+0%", "1.2": "+20%", "1.5": "+50%"}
+DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -95,11 +96,11 @@ def safe_public_url(value: str) -> str:
 
 
 def get_public_config() -> dict:
-    payment_url = safe_public_url(os.environ.get("DOC_LISTEN_PAYMENT_URL", ""))
+    payment_url = safe_public_url(os.environ.get("DOC_LISTEN_PAYMENT_URL", DEFAULT_BETA_CONTACT_URL))
     return {
-        "paymentProvider": os.environ.get("DOC_LISTEN_PAYMENT_PROVIDER", "toss-payments"),
+        "paymentProvider": os.environ.get("DOC_LISTEN_PAYMENT_PROVIDER", "kakao-openchat"),
         "paymentUrl": payment_url,
-        "betaPriceLabel": os.environ.get("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원 베타 후보"),
+        "betaPriceLabel": os.environ.get("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원 · 카카오톡 베타 신청"),
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
     }
 

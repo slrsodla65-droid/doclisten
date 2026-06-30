@@ -75,14 +75,14 @@ doclisten.app
 
 ## 결제 연결
 
-추천 방식은 Toss Payments 결제링크/결제창으로 시작하는 것입니다.
+현재 추천 방식은 초기 베타 검증용 카카오톡 오픈채팅 신청입니다. PG 결제는 유료 전환이 검증된 뒤 연결합니다.
 
 Render 환경변수에 아래 값을 넣으면 앱의 유료 베타 CTA가 결제 페이지로 자동 연결됩니다.
 
 ```text
-DOC_LISTEN_PAYMENT_PROVIDER=toss-payments
-DOC_LISTEN_PAYMENT_URL=https://결제사가_제공한_결제_URL
-DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원
+DOC_LISTEN_PAYMENT_PROVIDER=kakao-openchat
+DOC_LISTEN_PAYMENT_URL=https://open.kakao.com/o/sKDe1RBi
+DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원 · 카카오톡 베타 신청
 ```
 
-환경변수가 없으면 기존처럼 문의 페이지로 연결됩니다.
+환경변수가 없으면 기본 카카오톡 오픈채팅 링크로 연결됩니다.

@@ -72,7 +72,7 @@ async function loadPaymentConfig() {
         node.href = config.paymentUrl;
         node.target = '_blank';
         node.rel = 'noopener noreferrer';
-        node.textContent = '유료 베타 결제하기';
+        node.textContent = config.paymentProvider === 'kakao-openchat' ? '카카오톡으로 베타 신청' : '유료 베타 결제하기';
       });
     }
   } catch (error) {

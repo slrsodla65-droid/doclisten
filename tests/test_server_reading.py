@@ -66,12 +66,22 @@ def test_safe_public_url_accepts_https_only():
 
 def test_public_config_reads_payment_environment(monkeypatch):
     monkeypatch.setenv("DOC_LISTEN_PAYMENT_URL", "https://pay.example.com/beta")
-    monkeypatch.setenv("DOC_LISTEN_PAYMENT_PROVIDER", "toss-payments")
+    monkeypatch.setenv("DOC_LISTEN_PAYMENT_PROVIDER", "kakao-openchat")
     monkeypatch.setenv("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원")
 
     config = get_public_config()
 
-    assert config["paymentProvider"] == "toss-payments"
+    assert config["paymentProvider"] == "kakao-openchat"
     assert config["paymentUrl"] == "https://pay.example.com/beta"
     assert config["betaPriceLabel"] == "월 4,900원"
     assert config["freeDailyLimit"] == 20
+
+
+def test_public_config_defaults_to_kakao_openchat(monkeypatch):
+    monkeypatch.delenv("DOC_LISTEN_PAYMENT_URL", raising=False)
+    monkeypatch.delenv("DOC_LISTEN_PAYMENT_PROVIDER", raising=False)
+
+    config = get_public_config()
+
+    assert config["paymentProvider"] == "kakao-openchat"
+    assert config["paymentUrl"] == "https://open.kakao.com/o/sKDe1RBi"
