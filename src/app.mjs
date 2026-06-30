@@ -59,6 +59,7 @@ const state = {
   user: null,
   token: localStorage.getItem('doclisten-user-token') || '',
   serverUsage: null,
+  socialLoginProviders: [],
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
@@ -75,6 +76,7 @@ async function loadPaymentConfig() {
         node.textContent = config.betaPriceLabel;
       });
     }
+    state.socialLoginProviders = config.socialLoginProviders || [];
     if (config.paymentUrl) {
       els.paymentLinks.forEach((node) => {
         node.href = config.paymentUrl;
@@ -572,6 +574,9 @@ window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
+if (els.emailInput && localStorage.getItem('doclisten-user-email')) {
+  els.emailInput.value = localStorage.getItem('doclisten-user-email');
+}
 void loadPaymentConfig();
 void refreshAccountStatus();
 updateControls();

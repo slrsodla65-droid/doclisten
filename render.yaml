@@ -17,3 +17,18 @@ services:
       # 입금 확인 후 유료 해제에 사용할 코드는 Render 대시보드에서 Secret 환경변수로 설정합니다.
       # - key: DOC_LISTEN_BETA_ACCESS_CODE
       #   sync: false
+      # 소셜 로그인 키는 Render 대시보드에서 Secret 환경변수로 설정합니다.
+      # - key: DOC_LISTEN_BASE_URL
+      #   value: https://doclisten.app
+      # - key: GOOGLE_CLIENT_ID
+      #   sync: false
+      # - key: GOOGLE_CLIENT_SECRET
+      #   sync: false
+      # - key: KAKAO_REST_API_KEY
+      #   sync: false
+      # - key: KAKAO_CLIENT_SECRET
+      #   sync: false
+      # - key: NAVER_CLIENT_ID
+      #   sync: false
+      # - key: NAVER_CLIENT_SECRET
+      #   sync: false

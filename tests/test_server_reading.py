@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import create_usage_snapshot, get_or_create_user, get_public_config, mark_user_paid_with_code, normalize_tts_pronunciation, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, extract_oauth_email, get_or_create_user, get_public_config, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -131,3 +131,32 @@ def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
 
     assert activation["ok"] is False
     assert activation["reason"] == "invalid-code"
+
+
+def test_oauth_provider_config_uses_environment(monkeypatch):
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", "google-id")
+    monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "google-secret")
+
+    config = oauth_provider_config("google")
+
+    assert config["clientId"] == "google-id"
+    assert config["clientSecret"] == "google-secret"
+    assert "accounts.google.com" in config["authorizeUrl"]
+
+
+def test_build_oauth_authorize_url_contains_redirect_and_state(monkeypatch):
+    monkeypatch.setenv("KAKAO_REST_API_KEY", "kakao-id")
+    monkeypatch.setenv("KAKAO_CLIENT_SECRET", "kakao-secret")
+
+    url = build_oauth_authorize_url("kakao", "https://doclisten.app/api/oauth/callback/kakao", "state-123")
+
+    assert "kauth.kakao.com/oauth/authorize" in url
+    assert "client_id=kakao-id" in url
+    assert "state=state-123" in url
+    assert "redirect_uri=https%3A%2F%2Fdoclisten.app%2Fapi%2Foauth%2Fcallback%2Fkakao" in url
+
+
+def test_extract_oauth_email_by_provider():
+    assert extract_oauth_email("google", {"email": "User@Example.com"}) == "user@example.com"
+    assert extract_oauth_email("kakao", {"kakao_account": {"email": "kakao@example.com"}}) == "kakao@example.com"
+    assert extract_oauth_email("naver", {"response": {"email": "naver@example.com"}}) == "naver@example.com"

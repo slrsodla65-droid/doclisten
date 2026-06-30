@@ -115,6 +115,21 @@ h1 { margin: 0; font-size: clamp(22px, 5vw, 36px); }
   border-radius: 22px;
   padding: 16px;
 }
+.social-login-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.social-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-weight: 900;
+  border: 1px solid var(--line);
+}
+.social-login.google { background: #fff; color: #111827; }
+.social-login.kakao { background: #fee500; color: #191600; }
+.social-login.naver { background: #03c75a; color: #fff; }
+.account-divider { text-align: center; color: var(--muted); font-size: 13px; margin: 8px 0; }
 .account-row { display: flex; gap: 10px; align-items: end; margin: 10px 0; }
 .account-row label { flex: 1 1 220px; color: #bfdbfe; font-weight: 700; }
 .account-row input {
@@ -284,6 +299,7 @@ select {
   .compact-nav { order: 2; }
   .info-grid, .pricing-grid { grid-template-columns: 1fr; }
   .usage-panel { align-items: flex-start; flex-direction: column; }
+  .social-login-row { grid-template-columns: 1fr; }
   .account-row { align-items: stretch; flex-direction: column; }
   .mini-cta { width: 100%; text-align: center; }
   .legal-card { padding: 20px; }

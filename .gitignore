@@ -10,3 +10,5 @@ node_modules/
 public/samples/*.mp3
 .doclisten_users.json
 .doclisten_users.json.tmp
+.doclisten_oauth_states.json
+.doclisten_oauth_states.json.tmp

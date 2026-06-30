@@ -11,7 +11,8 @@ import subprocess
 import tempfile
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 CACHE = ROOT / ".tts_cache"
@@ -29,7 +30,9 @@ CACHE_VERSION = "multilingual-reading-v1"
 RATE_MAP = {"0.8": "-20%", "1": "+0%", "1.0": "+0%", "1.2": "+20%", "1.5": "+50%"}
 DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
 USER_STORE = ROOT / ".doclisten_users.json"
+OAUTH_STATE_STORE = ROOT / ".doclisten_oauth_states.json"
 USER_STORE_LOCK = threading.Lock()
+OAUTH_STATE_LOCK = threading.Lock()
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 class Handler(SimpleHTTPRequestHandler):
@@ -55,6 +58,13 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/me":
             token = self.headers.get("X-DocListen-Token", "")
             return self.send_json(get_user_status(token))
+        if path == "/api/oauth/start":
+            provider = (parse_qs(urlparse(self.path).query).get("provider") or [""])[0]
+            return start_oauth_flow(self, provider)
+        if path.startswith("/api/oauth/callback/"):
+            provider = path.rsplit("/", 1)[-1]
+            query = parse_qs(urlparse(self.path).query)
+            return finish_oauth_flow(self, provider, query)
         return super().do_GET()
 
     def do_POST(self):
@@ -109,6 +119,19 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def send_html(self, html: str, status=200):
+        data = html.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def send_redirect(self, location: str):
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.end_headers()
+
 
 def today_key() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -143,6 +166,48 @@ def save_user_store(data: dict, path: Path = USER_STORE):
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(path)
+
+
+def load_oauth_state_store(path: Path = OAUTH_STATE_STORE) -> dict:
+    if not path.exists():
+        return {"states": {}}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"states": {}}
+    if not isinstance(data, dict) or not isinstance(data.get("states"), dict):
+        return {"states": {}}
+    return data
+
+
+def save_oauth_state_store(data: dict, path: Path = OAUTH_STATE_STORE):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(path)
+
+
+def remember_oauth_state(provider: str, redirect_uri: str, path: Path = OAUTH_STATE_STORE) -> str:
+    state = secrets.token_urlsafe(24)
+    with OAUTH_STATE_LOCK:
+        data = load_oauth_state_store(path)
+        data["states"][state] = {
+            "provider": provider,
+            "redirectUri": redirect_uri,
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+        }
+        save_oauth_state_store(data, path)
+    return state
+
+
+def consume_oauth_state(state: str, provider: str, path: Path = OAUTH_STATE_STORE) -> dict | None:
+    with OAUTH_STATE_LOCK:
+        data = load_oauth_state_store(path)
+        item = data["states"].pop(str(state or ""), None)
+        save_oauth_state_store(data, path)
+    if not item or item.get("provider") != provider:
+        return None
+    return item
 
 
 def public_user(user: dict) -> dict:
@@ -231,6 +296,166 @@ def mark_user_paid_with_code(token: str, code: str, path: Path = USER_STORE) -> 
         return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
 
 
+def get_base_url(handler=None) -> str:
+    configured = safe_public_url(os.environ.get("DOC_LISTEN_BASE_URL", "")) if "safe_public_url" in globals() else ""
+    if configured:
+        return configured.rstrip("/")
+    host = handler.headers.get("Host", "doclisten.app") if handler else "doclisten.app"
+    scheme = "http" if host.startswith("127.0.0.1") or host.startswith("localhost") else "https"
+    return f"{scheme}://{host}".rstrip("/")
+
+
+def oauth_redirect_uri(provider: str, handler=None) -> str:
+    return f"{get_base_url(handler)}/api/oauth/callback/{provider}"
+
+
+def oauth_provider_config(provider: str) -> dict:
+    provider = str(provider or "").lower()
+    if provider == "google":
+        return {
+            "provider": "google",
+            "clientId": os.environ.get("GOOGLE_CLIENT_ID", "").strip(),
+            "clientSecret": os.environ.get("GOOGLE_CLIENT_SECRET", "").strip(),
+            "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+            "tokenUrl": "https://oauth2.googleapis.com/token",
+            "userInfoUrl": "https://openidconnect.googleapis.com/v1/userinfo",
+            "scope": "openid email profile",
+        }
+    if provider == "kakao":
+        return {
+            "provider": "kakao",
+            "clientId": os.environ.get("KAKAO_REST_API_KEY", "").strip(),
+            "clientSecret": os.environ.get("KAKAO_CLIENT_SECRET", "").strip(),
+            "authorizeUrl": "https://kauth.kakao.com/oauth/authorize",
+            "tokenUrl": "https://kauth.kakao.com/oauth/token",
+            "userInfoUrl": "https://kapi.kakao.com/v2/user/me",
+            "scope": "account_email profile_nickname",
+        }
+    if provider == "naver":
+        return {
+            "provider": "naver",
+            "clientId": os.environ.get("NAVER_CLIENT_ID", "").strip(),
+            "clientSecret": os.environ.get("NAVER_CLIENT_SECRET", "").strip(),
+            "authorizeUrl": "https://nid.naver.com/oauth2.0/authorize",
+            "tokenUrl": "https://nid.naver.com/oauth2.0/token",
+            "userInfoUrl": "https://openapi.naver.com/v1/nid/me",
+            "scope": "",
+        }
+    return {}
+
+
+def configured_social_providers() -> list[str]:
+    providers = []
+    for provider in ["google", "kakao", "naver"]:
+        config = oauth_provider_config(provider)
+        if config.get("clientId") and config.get("clientSecret"):
+            providers.append(provider)
+    return providers
+
+
+def build_oauth_authorize_url(provider: str, redirect_uri: str, state: str) -> str:
+    config = oauth_provider_config(provider)
+    if not config:
+        raise ValueError("unsupported provider")
+    params = {
+        "client_id": config["clientId"],
+        "redirect_uri": redirect_uri,
+        "state": state,
+    }
+    if provider == "google":
+        params.update({"response_type": "code", "scope": config["scope"], "access_type": "offline", "prompt": "select_account"})
+    elif provider == "kakao":
+        params.update({"response_type": "code", "scope": config["scope"]})
+    elif provider == "naver":
+        params.update({"response_type": "code"})
+    return f"{config['authorizeUrl']}?{urlencode(params)}"
+
+
+def provider_display_name(provider: str) -> str:
+    return {"google": "Google", "kakao": "카카오", "naver": "네이버"}.get(provider, provider)
+
+
+def oauth_error_html(message: str) -> str:
+    return f"""<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>로그인 오류</title></head><body style=\"font-family:system-ui;padding:24px;background:#070a12;color:#f8fafc\"><h1>소셜 로그인을 사용할 수 없습니다</h1><p>{message}</p><p><a style=\"color:#93c5fd\" href=\"/\">DocListen으로 돌아가기</a></p></body></html>"""
+
+
+def oauth_success_html(user: dict) -> str:
+    token = json.dumps(user.get("token", ""))
+    email = json.dumps(user.get("email", ""))
+    return f"""<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>로그인 완료</title></head><body style=\"font-family:system-ui;padding:24px;background:#070a12;color:#f8fafc\"><h1>로그인 완료</h1><p>DocListen으로 돌아갑니다.</p><script>localStorage.setItem('doclisten-user-token', {token}); localStorage.setItem('doclisten-user-email', {email}); location.replace('/');</script></body></html>"""
+
+
+def start_oauth_flow(handler, provider: str):
+    provider = str(provider or "").lower()
+    config = oauth_provider_config(provider)
+    if not config:
+        return handler.send_html(oauth_error_html("지원하지 않는 로그인 방식입니다."), status=400)
+    if not config.get("clientId") or not config.get("clientSecret"):
+        return handler.send_html(oauth_error_html(f"{provider_display_name(provider)} 로그인 키가 아직 설정되지 않았습니다. Render 환경변수 설정이 필요합니다."), status=503)
+    redirect_uri = oauth_redirect_uri(provider, handler)
+    state = remember_oauth_state(provider, redirect_uri)
+    handler.send_redirect(build_oauth_authorize_url(provider, redirect_uri, state))
+
+
+def post_form_json(url: str, form: dict, headers: dict | None = None) -> dict:
+    data = urlencode(form).encode("utf-8")
+    req = Request(url, data=data, headers={"Content-Type": "application/x-www-form-urlencoded", **(headers or {})}, method="POST")
+    with urlopen(req, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def get_bearer_json(url: str, access_token: str) -> dict:
+    req = Request(url, headers={"Authorization": f"Bearer {access_token}"})
+    with urlopen(req, timeout=20) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def exchange_oauth_code(provider: str, code: str, redirect_uri: str) -> dict:
+    config = oauth_provider_config(provider)
+    form = {
+        "grant_type": "authorization_code",
+        "client_id": config["clientId"],
+        "client_secret": config["clientSecret"],
+        "code": code,
+        "redirect_uri": redirect_uri,
+    }
+    if provider == "naver":
+        form["state"] = ""
+    token = post_form_json(config["tokenUrl"], form)
+    access_token = token.get("access_token")
+    if not access_token:
+        raise ValueError("access token missing")
+    return get_bearer_json(config["userInfoUrl"], access_token)
+
+
+def extract_oauth_email(provider: str, profile: dict) -> str:
+    if provider == "google":
+        return normalize_email(profile.get("email", ""))
+    if provider == "kakao":
+        return normalize_email((profile.get("kakao_account") or {}).get("email", ""))
+    if provider == "naver":
+        return normalize_email((profile.get("response") or {}).get("email", ""))
+    return ""
+
+
+def finish_oauth_flow(handler, provider: str, query: dict):
+    provider = str(provider or "").lower()
+    code = (query.get("code") or [""])[0]
+    state = (query.get("state") or [""])[0]
+    item = consume_oauth_state(state, provider)
+    if not item or not code:
+        return handler.send_html(oauth_error_html("로그인 상태값이 만료되었거나 잘못되었습니다. 다시 시도해주세요."), status=400)
+    try:
+        profile = exchange_oauth_code(provider, code, item["redirectUri"])
+        email = extract_oauth_email(provider, profile)
+        if not is_valid_email(email):
+            return handler.send_html(oauth_error_html("소셜 계정에서 이메일을 확인할 수 없습니다. 이메일 제공 권한을 허용해주세요."), status=400)
+        user = get_or_create_user(email)
+        return handler.send_html(oauth_success_html(user))
+    except Exception as exc:
+        return handler.send_html(oauth_error_html(f"소셜 로그인 처리 중 오류가 발생했습니다: {str(exc)}"), status=500)
+
+
 def safe_public_url(value: str) -> str:
     url = str(value or "").strip()
     parsed = urlparse(url)
@@ -251,6 +476,7 @@ def get_public_config() -> dict:
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
         "serverUsage": True,
         "activationEnabled": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
+        "socialLoginProviders": configured_social_providers(),
     }
 
 
