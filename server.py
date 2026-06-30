@@ -97,10 +97,13 @@ def safe_public_url(value: str) -> str:
 
 def get_public_config() -> dict:
     payment_url = safe_public_url(os.environ.get("DOC_LISTEN_PAYMENT_URL", DEFAULT_BETA_CONTACT_URL))
+    env_provider = os.environ.get("DOC_LISTEN_PAYMENT_PROVIDER", "kakao-openchat")
+    env_price_label = os.environ.get("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원 · 카카오톡 베타 신청")
+    is_kakao_openchat = "open.kakao.com" in payment_url
     return {
-        "paymentProvider": os.environ.get("DOC_LISTEN_PAYMENT_PROVIDER", "kakao-openchat"),
+        "paymentProvider": "kakao-openchat" if is_kakao_openchat else env_provider,
         "paymentUrl": payment_url,
-        "betaPriceLabel": os.environ.get("DOC_LISTEN_BETA_PRICE_LABEL", "월 4,900원 · 카카오톡 베타 신청"),
+        "betaPriceLabel": "월 4,900원 · 카카오톡 베타 신청" if is_kakao_openchat else env_price_label,
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
     }
 
