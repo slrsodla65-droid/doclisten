@@ -38,6 +38,8 @@ const els = {
   betaCodeInput: document.querySelector('#betaCodeInput'),
   activateBtn: document.querySelector('#activateBtn'),
   accountMessage: document.querySelector('#accountMessage'),
+  accountStatus: document.querySelector('#accountStatus'),
+  logoutBtn: document.querySelector('#logoutBtn'),
 };
 
 const state = {
@@ -96,6 +98,18 @@ function setAccountMessage(message) {
   if (els.accountMessage) els.accountMessage.textContent = message;
 }
 
+function updateAccountStatusUi() {
+  if (els.accountStatus) {
+    if (state.user?.email) {
+      const planLabel = state.plan === 'free' ? 'Free' : state.plan === 'admin' ? 'Admin' : 'Beta Pro';
+      els.accountStatus.textContent = `${state.user.email} · ${planLabel}`;
+    } else {
+      els.accountStatus.textContent = '아직 로그인하지 않았습니다.';
+    }
+  }
+  els.logoutBtn?.classList.toggle('hidden', !state.token);
+}
+
 function applyServerStatus(payload) {
   if (payload?.user) {
     state.user = payload.user;
@@ -108,11 +122,13 @@ function applyServerStatus(payload) {
     state.freeListensUsed = Number(payload.usage.used || 0);
   }
   updateUsageUi();
+  updateAccountStatusUi();
 }
 
 async function refreshAccountStatus() {
   if (!state.token) {
     updateUsageUi();
+    updateAccountStatusUi();
     return;
   }
   try {
@@ -122,6 +138,19 @@ async function refreshAccountStatus() {
   } catch (error) {
     console.debug('Account status unavailable', error);
   }
+}
+
+function logout() {
+  localStorage.removeItem('doclisten-user-token');
+  localStorage.removeItem('doclisten-user-email');
+  state.user = null;
+  state.token = '';
+  state.serverUsage = null;
+  state.plan = 'free';
+  state.freeListensUsed = 0;
+  updateUsageUi();
+  updateAccountStatusUi();
+  setAccountMessage('로그아웃했습니다. 다시 사용하려면 Google로 로그인해주세요.');
 }
 
 async function activateBetaCode() {
@@ -541,6 +570,10 @@ els.activateBtn?.addEventListener('click', () => {
   void activateBetaCode();
 });
 
+els.logoutBtn?.addEventListener('click', () => {
+  logout();
+});
+
 window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
@@ -549,3 +582,4 @@ void loadPaymentConfig();
 void refreshAccountStatus();
 updateControls();
 updateUsageUi();
+updateAccountStatusUi();

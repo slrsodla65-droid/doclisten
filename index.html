@@ -35,6 +35,10 @@
       </section>
 
       <section class="account-panel" aria-label="회원 로그인과 베타 코드">
+        <div class="account-status-row">
+          <p id="accountStatus" class="account-status">아직 로그인하지 않았습니다.</p>
+          <button id="logoutBtn" class="secondary-button hidden" type="button">로그아웃</button>
+        </div>
         <div class="social-login-row" aria-label="Google 로그인">
           <a class="social-login google" href="/api/oauth/start?provider=google">Google로 계속하기</a>
         </div>
@@ -171,6 +175,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=40"></script>
+    <script type="module" src="./src/app.mjs?v=41"></script>
   </body>
 </html>

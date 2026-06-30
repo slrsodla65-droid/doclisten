@@ -164,11 +164,16 @@ test('payment CTAs can be converted to payment links from server config', () => 
 });
 
 
-test('only Google social login button is present', () => {
+test('only Google social login button is present with clear account controls', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
 
   assert.match(html, /Google로 계속하기/);
   assert.match(html, /\/api\/oauth\/start\?provider=google/);
+  assert.match(html, /id="accountStatus"/);
+  assert.match(html, /id="logoutBtn"/);
+  assert.match(app, /localStorage\.removeItem\('doclisten-user-token'\)/);
+  assert.match(app, /로그아웃/);
   assert.doesNotMatch(html, /이메일 로그인/);
   assert.doesNotMatch(html, /id="emailInput"/);
   assert.doesNotMatch(html, /id="loginBtn"/);
