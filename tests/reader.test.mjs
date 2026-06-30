@@ -232,6 +232,7 @@ test('render config enables persistent SQLite storage for paid beta operations',
   assert.match(renderConfig, /disk:/);
   assert.match(renderConfig, /mountPath: \/var\/data/);
   assert.match(renderConfig, /sizeGB: 1/);
+  assert.match(renderConfig, /buildCommand: "python3 -m pip install -r requirements.txt && python3 -m py_compile server.py"/);
   assert.match(renderConfig, /- key: DOC_LISTEN_USER_STORE_PATH/);
   assert.match(renderConfig, /value: \/var\/data\/doclisten\/users\.sqlite3/);
 });
