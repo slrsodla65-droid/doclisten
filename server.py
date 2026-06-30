@@ -27,8 +27,27 @@ KOREAN_VOICES = [
     {"ShortName": "ko-KR-SunHiNeural", "Locale": "ko-KR", "FriendlyName": "SunHi 여성"},
 ]
 KOREAN_VOICE_NAMES = {v["ShortName"] for v in KOREAN_VOICES}
-CACHE_VERSION = "multilingual-reading-v1"
-RATE_MAP = {"0.8": "-20%", "1": "+0%", "1.0": "+0%", "1.2": "+20%", "1.5": "+50%"}
+CACHE_VERSION = "audiobook-reading-v2"
+RATE_MAP = {
+    "0.5": "-50%",
+    "0.6": "-40%",
+    "0.7": "-30%",
+    "0.8": "-20%",
+    "0.9": "-10%",
+    "1": "+0%",
+    "1.0": "+0%",
+    "1.1": "+10%",
+    "1.2": "+20%",
+    "1.3": "+30%",
+    "1.4": "+40%",
+    "1.5": "+50%",
+    "1.6": "+60%",
+    "1.7": "+70%",
+    "1.8": "+80%",
+    "1.9": "+90%",
+    "2": "+100%",
+    "2.0": "+100%",
+}
 DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
 USER_STORE = Path(os.environ.get("DOC_LISTEN_USER_STORE_PATH", ROOT / ".doclisten_users.json"))
 OAUTH_STATE_STORE = ROOT / ".doclisten_oauth_states.json"
@@ -669,6 +688,42 @@ def get_health_status() -> dict:
     }
 
 
+def _format_count_korean(count: int) -> str:
+    labels = {2: "두", 3: "세", 4: "네", 5: "다섯", 6: "여섯", 7: "일곱", 8: "여덟"}
+    return labels.get(count, str(count))
+
+
+def _naturalize_item(item: str, final: bool = False) -> str:
+    cleaned = re.sub(r"\s+", " ", item).strip(" .")
+    cleaned = re.sub(r"이다$|입니다$|한다$|합니다$", "", cleaned).strip()
+    suffix = "입니다." if final else "."
+    return f"{cleaned}{suffix}"
+
+
+def _generic_list_to_reading_script(spoken: str) -> str:
+    match = re.fullmatch(r"(.{2,35}?)(?:은|는)\s+(.+?)(?:이다|입니다|한다|합니다)\.?", spoken)
+    if not match:
+        return ""
+    topic, raw_items = match.groups()
+    if raw_items.count(",") < 1:
+        return ""
+    items = [item.strip() for item in re.split(r"\s*,\s*", raw_items) if item.strip()]
+    if not 2 <= len(items) <= 8:
+        return ""
+    if any(len(item) > 35 for item in items):
+        return ""
+
+    connectors = ["먼저", "그다음", "그리고"]
+    sentences = [f"{topic}은, 크게 {_format_count_korean(len(items))} 가지입니다."]
+    for index, item in enumerate(items):
+        if index == len(items) - 1:
+            sentences.append(f"마지막으로 {_naturalize_item(item, final=True)}")
+        else:
+            connector = connectors[min(index, len(connectors) - 1)]
+            sentences.append(f"{connector} {_naturalize_item(item)}")
+    return " ".join(sentences)
+
+
 def transform_to_reading_script(text: str) -> str:
     """문서용 PDF 문장을 TTS가 더 사람처럼 설명하도록 읽기용 문장으로 바꾼다.
 
@@ -692,6 +747,10 @@ def transform_to_reading_script(text: str) -> str:
             "마지막으로 엔터프라이즈 플랜입니다.",
         ])
 
+    generic_list = _generic_list_to_reading_script(spoken)
+    if generic_list:
+        spoken = generic_list
+
     # 긴 사업 설명 문장은 연결어를 넣어 리듬을 만든다.
     spoken = re.sub(
         r"단계별\s*사업\s*확장\s*전략은\s*초기\s*고객\s*확보와\s*유료\s*전환율\s*검증\s*이후\s*본격적으로\s*시장(?:을|을\s*)\s*넓히는\s*방식입니다\.",
@@ -700,7 +759,7 @@ def transform_to_reading_script(text: str) -> str:
     )
 
     # 자주 나오는 문서 표현 앞에는 약한 쉼표를 넣어 한 덩어리로 밀어 읽지 않게 한다.
-    spoken = re.sub(r"\s+(먼저|그리고|하지만|다만|즉|예를 들어|그다음|마지막으로)\s+", r", \1 ", spoken)
+    spoken = re.sub(r"(?<![.!?。！？])\s+(먼저|그리고|하지만|다만|즉|예를 들어|그다음|마지막으로)\s+", r", \1 ", spoken)
     spoken = re.sub(r"\s+(이후|뒤)\s+", r" \1, ", spoken)
     return re.sub(r"\s+", " ", spoken).strip()
 

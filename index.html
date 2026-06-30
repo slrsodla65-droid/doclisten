@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>DocListen | PDF를 귀로 듣는 웹앱</title>
-    <meta name="description" content="긴 PDF를 눈으로만 읽지 말고, 원하는 문단부터 브라우저 기본 한국어 음성으로 들어보세요." />
+    <meta name="description" content="긴 PDF를 눈으로만 읽지 말고, 전문 오디오북 음성처럼 문단 사이에 숨을 두고 자연스럽게 들어보세요." />
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
@@ -67,6 +67,7 @@
           <p>PDF 화면에서 원하는 문단을 누르거나, 듣기 버튼으로 현재 위치부터 들을 수 있습니다.</p>
           <ul>
             <li>문단 터치 → 해당 문단부터 읽기</li>
+            <li>전문 오디오북 음성 → 문장 단위 휴지와 자연 낭독</li>
             <li>듣기 / 일시정지 / 이전 문단 / 다음 문단</li>
             <li>현재 읽는 문단 하이라이트</li>
             <li>마지막 읽은 위치 저장</li>
@@ -104,7 +105,7 @@
           <ul>
             <li>하루 20문단 듣기 체험</li>
             <li>문단 클릭 듣기</li>
-            <li>브라우저 기본 음성</li>
+            <li>전문 오디오북 음성 우선, 실패 시 브라우저 음성 자동 전환</li>
             <li>마지막 위치 이어보기</li>
           </ul>
         </article>
@@ -179,6 +180,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=45"></script>
+    <script type="module" src="./src/app.mjs?v=46"></script>
   </body>
 </html>

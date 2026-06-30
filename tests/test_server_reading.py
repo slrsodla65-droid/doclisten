@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -29,6 +29,33 @@ def test_transform_to_reading_script_adds_rhythm_markers_for_long_business_sente
     assert "먼저 초기 고객 확보와" in spoken
     assert "그다음 유료 전환율 검증 이후" in spoken
     assert "본격적으로 시장을 넓히는 방식입니다." in spoken
+
+
+def test_transform_to_reading_script_turns_generic_feature_lists_into_spoken_enumeration():
+    source = "핵심 기능은 PDF 업로드, 문단 선택, 이어듣기, 사용량 제한이다."
+
+    spoken = transform_to_reading_script(source)
+
+    assert "핵심 기능은, 크게 네 가지입니다." in spoken
+    assert "먼저 PDF 업로드." in spoken
+    assert "그다음 문단 선택." in spoken
+    assert "그리고 이어듣기." in spoken
+    assert "마지막으로 사용량 제한입니다." in spoken
+    assert ".," not in spoken
+
+
+def test_split_for_human_reading_separates_sentence_and_clause_pauses():
+    chunks = split_for_human_reading(
+        "핵심 기능은, 크게 네 가지입니다. 먼저 PDF 업로드. 그다음 문단 선택. 그리고 이어듣기. 마지막으로 사용량 제한입니다."
+    )
+
+    assert chunks == [
+        "핵심 기능은, 크게 네 가지입니다.",
+        "먼저 PDF 업로드.",
+        "그다음 문단 선택.",
+        "그리고 이어듣기.",
+        "마지막으로 사용량 제한입니다.",
+    ]
 
 
 def test_normalize_tts_pronunciation_applies_reading_script_before_pronunciation_fix():

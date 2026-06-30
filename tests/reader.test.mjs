@@ -173,6 +173,18 @@ test('daily usage key resets by calendar day', () => {
 });
 
 
+test('server audiobook mode is wired as the default playback path with browser fallback', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+
+  assert.match(html, /전문 오디오북 음성/);
+  assert.match(app, /fetch\('\/api\/tts'/);
+  assert.match(app, /gtts-ko-human/);
+  assert.match(app, /playServerNarration/);
+  assert.match(app, /fallbackToBrowserSpeech/);
+});
+
+
 test('static policy pages disclose login and paid beta basics', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');

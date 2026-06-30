@@ -63,6 +63,8 @@ const state = {
   token: localStorage.getItem('doclisten-user-token') || '',
   serverUsage: null,
   socialLoginProviders: [],
+  currentAudio: null,
+  currentAudioUrl: '',
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
@@ -305,9 +307,23 @@ function showReader() {
   els.player.classList.remove('hidden');
 }
 
+function releaseCurrentAudio() {
+  if (state.currentAudio) {
+    state.currentAudio.pause();
+    state.currentAudio.removeAttribute('src');
+    state.currentAudio.load();
+    state.currentAudio = null;
+  }
+  if (state.currentAudioUrl) {
+    URL.revokeObjectURL(state.currentAudioUrl);
+    state.currentAudioUrl = '';
+  }
+}
+
 function stopSpeech() {
   state.speechRunId += 1;
   window.speechSynthesis?.cancel();
+  releaseCurrentAudio();
   state.speaking = false;
   state.paused = false;
   updateControls();
@@ -502,16 +518,26 @@ async function getPreviousBlock() {
   return null;
 }
 
-async function speakBlock(block) {
-  if (!block?.text) return;
-  if (!(await consumeListeningCredit())) return;
-  state.speechRunId += 1;
-  const runId = state.speechRunId;
-  state.speaking = true;
-  state.paused = false;
-  window.speechSynthesis.cancel();
-  setActiveBlock(block, { autoScroll: true });
+function rateForServerTts() {
+  const value = String(els.rateSelect.value || '1');
+  return value === '2.0' ? '2' : value;
+}
 
+async function continueToNextBlock(runId) {
+  if (runId !== state.speechRunId) return;
+  const next = await getNextBlock();
+  if (next) {
+    speakBlock(next);
+  } else {
+    releaseCurrentAudio();
+    state.speaking = false;
+    state.paused = false;
+    updateControls();
+  }
+}
+
+function fallbackToBrowserSpeech(block, runId) {
+  if (runId !== state.speechRunId) return;
   const spokenText = prepareSpokenText(block.text);
   const utterance = new SpeechSynthesisUtterance(spokenText);
   utterance.lang = 'ko-KR';
@@ -524,16 +550,8 @@ async function speakBlock(block) {
     state.paused = false;
     updateControls();
   };
-  utterance.onend = async () => {
-    if (runId !== state.speechRunId) return;
-    const next = await getNextBlock();
-    if (next) {
-      speakBlock(next);
-    } else {
-      state.speaking = false;
-      state.paused = false;
-      updateControls();
-    }
+  utterance.onend = () => {
+    void continueToNextBlock(runId);
   };
   utterance.onerror = () => {
     if (runId !== state.speechRunId) return;
@@ -542,10 +560,68 @@ async function speakBlock(block) {
     updateControls();
   };
 
+  window.speechSynthesis.speak(utterance);
+}
+
+async function playServerNarration(block, runId) {
+  const response = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: block.text,
+      voice: 'gtts-ko-human',
+      rate: rateForServerTts(),
+    }),
+  });
+  if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+  if (runId !== state.speechRunId) return;
+
+  const blob = await response.blob();
+  if (runId !== state.speechRunId) return;
+
+  releaseCurrentAudio();
+  const audioUrl = URL.createObjectURL(blob);
+  const audio = new Audio(audioUrl);
+  state.currentAudioUrl = audioUrl;
+  state.currentAudio = audio;
+
+  audio.onplay = () => {
+    if (runId !== state.speechRunId) return;
+    state.speaking = true;
+    state.paused = false;
+    updateControls();
+  };
+  audio.onended = () => {
+    void continueToNextBlock(runId);
+  };
+  audio.onerror = () => {
+    if (runId !== state.speechRunId) return;
+    releaseCurrentAudio();
+    fallbackToBrowserSpeech(block, runId);
+  };
+  await audio.play();
+}
+
+async function speakBlock(block) {
+  if (!block?.text) return;
+  if (!(await consumeListeningCredit())) return;
+  state.speechRunId += 1;
+  const runId = state.speechRunId;
   state.speaking = true;
   state.paused = false;
+  window.speechSynthesis.cancel();
+  releaseCurrentAudio();
+  setActiveBlock(block, { autoScroll: true });
+  els.currentText.textContent = `${block.text} · 오디오북 음성을 준비하는 중입니다...`;
   updateControls();
-  window.speechSynthesis.speak(utterance);
+
+  try {
+    await playServerNarration(block, runId);
+  } catch (error) {
+    console.debug('Server narration unavailable; falling back to browser speech', error);
+    if (runId !== state.speechRunId) return;
+    fallbackToBrowserSpeech(block, runId);
+  }
 }
 
 async function loadPdf(file) {
@@ -589,10 +665,18 @@ els.listenBtn.addEventListener('click', () => {
 els.pauseBtn.addEventListener('click', () => {
   if (!state.speaking) return;
   if (state.paused) {
-    window.speechSynthesis.resume();
+    if (state.currentAudio) {
+      void state.currentAudio.play();
+    } else {
+      window.speechSynthesis.resume();
+    }
     state.paused = false;
   } else {
-    window.speechSynthesis.pause();
+    if (state.currentAudio) {
+      state.currentAudio.pause();
+    } else {
+      window.speechSynthesis.pause();
+    }
     state.paused = true;
   }
   updateControls();
