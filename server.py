@@ -80,6 +80,14 @@ class Handler(SimpleHTTPRequestHandler):
             if path == "/api/listen":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 return self.send_json(record_listen_usage(token))
+            if path == "/api/logout":
+                token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
+                result = revoke_user_token(token)
+                return self.send_json(result, status=200 if result.get("ok") else 400)
+            if path == "/api/delete-account":
+                token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
+                result = delete_user_account(token)
+                return self.send_json(result, status=200 if result.get("ok") else 400)
             if path == "/api/activate":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 code = str(payload.get("code", "")).strip()
@@ -365,6 +373,29 @@ def get_user_status(token: str, path: Path = USER_STORE) -> dict:
     if not user:
         return {"ok": False, "reason": "not-authenticated", "usage": create_usage_snapshot(None)}
     return {"ok": True, "user": public_user(user), "usage": create_usage_snapshot(user)}
+
+
+def revoke_user_token(token: str, path: Path = USER_STORE) -> dict:
+    with USER_STORE_LOCK:
+        data, user = find_user_by_token(token, path)
+        if not user:
+            return {"ok": False, "reason": "not-authenticated"}
+        removed = data["users"].pop(str(token or ""), None)
+        save_user_store(data, path)
+        return {"ok": True, "revoked": bool(removed)}
+
+
+def delete_user_account(token: str, path: Path = USER_STORE) -> dict:
+    with USER_STORE_LOCK:
+        data, user = find_user_by_token(token, path)
+        if not user:
+            return {"ok": False, "reason": "not-authenticated"}
+        email = user.get("email", "")
+        tokens_to_delete = [item_token for item_token, item in data["users"].items() if item.get("email") == email]
+        for item_token in tokens_to_delete:
+            data["users"].pop(item_token, None)
+        save_user_store(data, path)
+        return {"ok": True, "deleted": True, "email": email}
 
 
 def record_listen_usage(token: str, path: Path = USER_STORE, day: str | None = None, limit: int | None = None) -> dict:

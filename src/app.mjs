@@ -40,6 +40,7 @@ const els = {
   accountMessage: document.querySelector('#accountMessage'),
   accountStatus: document.querySelector('#accountStatus'),
   logoutBtn: document.querySelector('#logoutBtn'),
+  deleteAccountBtn: document.querySelector('#deleteAccountBtn'),
 };
 
 const state = {
@@ -113,6 +114,7 @@ function updateAccountStatusUi() {
     }
   }
   els.logoutBtn?.classList.toggle('hidden', !state.token);
+  els.deleteAccountBtn?.classList.toggle('hidden', !state.token);
 }
 
 function applyServerStatus(payload) {
@@ -145,7 +147,7 @@ async function refreshAccountStatus() {
   }
 }
 
-function logout() {
+function clearLocalAccountState() {
   localStorage.removeItem('doclisten-user-token');
   localStorage.removeItem('doclisten-user-email');
   state.user = null;
@@ -155,7 +157,46 @@ function logout() {
   state.freeListensUsed = 0;
   updateUsageUi();
   updateAccountStatusUi();
+}
+
+async function logout() {
+  const token = state.token;
+  if (token) {
+    try {
+      await fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-DocListen-Token': token },
+        body: JSON.stringify({}),
+      });
+    } catch (error) {
+      console.debug('Server logout unavailable', error);
+    }
+  }
+  clearLocalAccountState();
   setAccountMessage('이 브라우저에서 로그아웃했습니다. 다시 사용하려면 Google로 로그인해주세요.');
+}
+
+async function deleteAccount() {
+  if (!state.token) return;
+  const confirmed = window.confirm('DocListen 계정과 서버 사용량 기록을 삭제할까요? 이 브라우저에서도 로그아웃됩니다.');
+  if (!confirmed) return;
+  try {
+    const response = await fetch('/api/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({}),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      setAccountMessage('계정 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+    clearLocalAccountState();
+    setAccountMessage('계정과 사용량 기록을 삭제했습니다. 다시 사용하려면 Google로 로그인해주세요.');
+  } catch (error) {
+    console.debug('Account deletion unavailable', error);
+    setAccountMessage('계정 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
+  }
 }
 
 async function activateBetaCode() {
@@ -578,7 +619,11 @@ els.activateBtn?.addEventListener('click', () => {
 });
 
 els.logoutBtn?.addEventListener('click', () => {
-  logout();
+  void logout();
+});
+
+els.deleteAccountBtn?.addEventListener('click', () => {
+  void deleteAccount();
 });
 
 window.addEventListener('beforeunload', () => {

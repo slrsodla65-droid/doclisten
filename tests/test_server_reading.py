@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, extract_oauth_email, get_health_status, get_or_create_user, get_public_config, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, delete_user_account, extract_oauth_email, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -162,6 +162,29 @@ def test_wrong_beta_code_is_rejected(tmp_path, monkeypatch):
 
     assert activation["ok"] is False
     assert activation["reason"] == "invalid-code"
+
+
+def test_logout_revokes_token_without_deleting_account(tmp_path):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("logout@example.com", store, auth_provider="google")
+
+    revoked = revoke_user_token(user["token"], store)
+
+    assert revoked["ok"] is True
+    assert get_user_status(user["token"], store)["ok"] is False
+    assert get_or_create_user("logout@example.com", store, auth_provider="google")["token"] != user["token"]
+
+
+def test_delete_account_removes_user_and_usage(tmp_path):
+    store = tmp_path / "users.json"
+    user = get_or_create_user("delete@example.com", store, auth_provider="google")
+    record_listen_usage(user["token"], store, "2026-06-30", limit=20)
+
+    deleted = delete_user_account(user["token"], store)
+
+    assert deleted["ok"] is True
+    assert deleted["deleted"] is True
+    assert get_user_status(user["token"], store)["ok"] is False
 
 
 def test_sqlite_user_store_persists_usage_and_beta_plan(tmp_path, monkeypatch):

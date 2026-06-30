@@ -162,6 +162,7 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /베타 코드/);
   assert.match(privacy, /Google 로그인/);
   assert.match(privacy, /일별 문단 사용량/);
+  assert.match(privacy, /계정 삭제/);
 });
 
 
@@ -195,8 +196,12 @@ test('only Google social login button is present with clear account controls', (
   assert.match(html, /\/api\/oauth\/start\?provider=google/);
   assert.match(html, /id="accountStatus"/);
   assert.match(html, /id="logoutBtn"/);
+  assert.match(html, /id="deleteAccountBtn"/);
   assert.match(app, /localStorage\.removeItem\('doclisten-user-token'\)/);
+  assert.match(app, /fetch\('\/api\/logout'/);
+  assert.match(app, /fetch\('\/api\/delete-account'/);
   assert.match(app, /이 브라우저에서 로그아웃/);
+  assert.match(app, /계정과 사용량 기록을 삭제했습니다/);
   assert.match(app, /Admin 활성화됨/);
   assert.doesNotMatch(html, /이메일 로그인/);
   assert.doesNotMatch(html, /id="emailInput"/);
