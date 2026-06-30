@@ -66,21 +66,22 @@ DOC_LISTEN_BETA_ACCESS_CODE=PAID-1234
 DOC_LISTEN_PAYMENT_PROVIDER=kakao-openchat
 DOC_LISTEN_BETA_PRICE_LABEL=월 4,900원 · 카카오톡 베타 신청
 DOC_LISTEN_PAYMENT_URL=https://open.kakao.com/o/sKDe1RBi
+DOC_LISTEN_USER_STORE_PATH=/var/data/doclisten/users.sqlite3
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 DOC_LISTEN_BASE_URL=https://doclisten.app
 DOC_LISTEN_BETA_ACCESS_CODES=...
 ```
 
-유료 사용자 데이터를 안정적으로 보존하려면 Render Disk 승인 후 다음 설정을 추가합니다.
+Render Disk 설정:
 
 ```text
-DOC_LISTEN_USER_STORE_PATH=/var/data/doclisten/users.sqlite3
+plan=starter
+mountPath=/var/data
+sizeGB=1
 ```
 
-중요: 실제 유료 사용자를 받기 전에는 위 영속 저장소 설정을 완료하는 것을 권장합니다. 저장소가 초기화되면 Beta Pro 전환 상태와 1회용 코드 사용 이력도 함께 사라질 수 있습니다.
-
-주의: Render Disk는 비용이 발생할 수 있으므로 운영자 승인 후 켭니다.
+실제 유료 사용자를 받기 전에는 `/api/health` 응답에서 `storage`가 `sqlite`인지 확인합니다. 저장소가 `json`이면 서버 재배포/재시작 시 Beta Pro 전환 상태와 1회용 코드 사용 이력이 사라질 수 있습니다.
 
 ## 이용기간 및 환불 운영 기준
 

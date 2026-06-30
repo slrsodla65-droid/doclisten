@@ -190,14 +190,16 @@ test('payment CTAs can be converted to payment links from server config', () => 
 });
 
 
-test('render config documents persistent SQLite path without enabling paid disk by default', () => {
+test('render config enables persistent SQLite storage for paid beta operations', () => {
   const renderConfig = readFileSync(new URL('../render.yaml', import.meta.url), 'utf8');
 
   assert.match(renderConfig, /SQLite 저장소/);
-  assert.match(renderConfig, /# - key: DOC_LISTEN_USER_STORE_PATH/);
-  assert.match(renderConfig, /#   value: \/var\/data\/doclisten\/users\.sqlite3/);
-  assert.doesNotMatch(renderConfig, /^\s*disk:\s*$/m);
-  assert.doesNotMatch(renderConfig, /^\s*disks:\s*$/m);
+  assert.match(renderConfig, /plan: starter/);
+  assert.match(renderConfig, /disk:/);
+  assert.match(renderConfig, /mountPath: \/var\/data/);
+  assert.match(renderConfig, /sizeGB: 1/);
+  assert.match(renderConfig, /- key: DOC_LISTEN_USER_STORE_PATH/);
+  assert.match(renderConfig, /value: \/var\/data\/doclisten\/users\.sqlite3/);
 });
 
 
