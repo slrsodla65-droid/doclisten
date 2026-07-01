@@ -768,6 +768,7 @@ def get_health_status() -> dict:
         "betaActivationConfigured": bool(os.environ.get("DOC_LISTEN_BETA_ACCESS_CODE", "").strip()),
         "adminEmailConfigured": bool(admin_emails()),
         "freeDailyLimit": int(os.environ.get("DOC_LISTEN_FREE_DAILY_LIMIT", "20")),
+        "ttsCacheVersion": CACHE_VERSION,
     }
 
 
