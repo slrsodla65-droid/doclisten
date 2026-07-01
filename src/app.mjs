@@ -67,6 +67,7 @@ const state = {
   socialLoginProviders: [],
   currentAudio: null,
   currentAudioUrl: '',
+  nextNarration: null,
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
@@ -555,6 +556,48 @@ function rateForServerTts() {
   return value === '2.0' ? '2' : value;
 }
 
+function getNextLoadedBlock(block) {
+  if (!block) return null;
+  const blocks = state.pages.get(block.page) || [];
+  const index = blocks.findIndex((item) => item.id === block.id);
+  if (index >= 0 && index + 1 < blocks.length) return blocks[index + 1];
+  return null;
+}
+
+async function fetchServerNarration(block) {
+  const response = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: block.text,
+      voice: 'gtts-ko-human',
+      rate: rateForServerTts(),
+    }),
+  });
+  if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+  return response.blob();
+}
+
+function prefetchNextNarration(block) {
+  if (!state.token) return;
+  if (state.serverUsage?.plan === 'free' && state.serverUsage?.reached) return;
+  const next = getNextLoadedBlock(block);
+  if (!next?.text) return;
+  if (state.nextNarration?.blockId === next.id) return;
+  state.nextNarration = {
+    blockId: next.id,
+    rate: rateForServerTts(),
+    promise: fetchServerNarration(next),
+  };
+}
+
+async function narrationBlobFor(block) {
+  if (state.nextNarration?.blockId === block.id && state.nextNarration?.rate === rateForServerTts()) {
+    return state.nextNarration.promise;
+  }
+  return fetchServerNarration(block);
+}
+
 async function continueToNextBlock(runId) {
   if (runId !== state.speechRunId) return;
   const next = await getNextBlock();
@@ -596,19 +639,7 @@ function fallbackToBrowserSpeech(block, runId) {
 }
 
 async function playServerNarration(block, runId) {
-  const response = await fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: block.text,
-      voice: 'gtts-ko-human',
-      rate: rateForServerTts(),
-    }),
-  });
-  if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
-  if (runId !== state.speechRunId) return;
-
-  const blob = await response.blob();
+  const blob = await narrationBlobFor(block);
   if (runId !== state.speechRunId) return;
 
   releaseCurrentAudio();
@@ -623,6 +654,7 @@ async function playServerNarration(block, runId) {
     state.speaking = true;
     state.paused = false;
     updateControls();
+    prefetchNextNarration(block);
   };
   audio.onended = () => {
     void continueToNextBlock(runId);
@@ -668,6 +700,7 @@ async function loadPdf(file) {
   trackBetaEvent('pdf_upload');
   state.fileName = file.name;
   state.pages.clear();
+  state.nextNarration = null;
   state.activeBlock = null;
   els.docTitle.textContent = file.name;
   els.currentText.textContent = 'PDF를 불러오는 중입니다...';

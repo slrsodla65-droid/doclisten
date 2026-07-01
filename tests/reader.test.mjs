@@ -185,6 +185,9 @@ test('server audiobook mode declares production dependencies and fallback-safe p
   assert.match(app, /fallbackToBrowserSpeech/);
   assert.match(app, /audio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
   assert.match(app, /state\.currentAudio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
+  assert.match(app, /prefetchNextNarration/);
+  assert.match(app, /nextNarration/);
+  assert.match(app, /narrationBlobFor/);
   assert.match(requirements, /^gTTS/m);
 });
 
