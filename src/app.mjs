@@ -426,6 +426,47 @@ function unionBox(a, b) {
   return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
 }
 
+function normalizeKoreanSpacing(text) {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .replace(/([가-힣])\s+(할|한|하는|하기|하여|하며|하고|한다|한다\.|된다|된다\.|되는|되도록|있도록|입니다|입니다\.|다\.)(?=\s|$)/g, '$1$2')
+    .replace(/([가-힣])\s+(은|는|이|가|을|를|의|에|와|과|도|만|부터|까지|에서|으로|로)(?=\s|$)/g, '$1$2')
+    .trim();
+}
+
+function isOrphanKoreanEnding(text) {
+  const value = String(text || '').trim();
+  return /^(다|다\.|니다|니다\.|입니다|입니다\.|합니다|합니다\.|됩니다|됩니다\.|한다|한다\.|된다|된다\.|했다|했다\.|요|요\.)$/.test(value);
+}
+
+function shouldJoinReadingLine(prev, next) {
+  const prevText = String(prev?.text || '').trim();
+  const nextText = String(next?.text || '').trim();
+  if (!prevText || !nextText) return false;
+  if (isOrphanKoreanEnding(nextText)) return true;
+  if (/^[).,;:!?…。、，]/.test(nextText)) return true;
+  if (!/[.!?。！？]$/.test(prevText) && /[가-힣0-9]$/.test(prevText) && /^[가-힣0-9]/.test(nextText)) return true;
+  return false;
+}
+
+function mergeReadingLines(lines, pageNumber) {
+  const merged = [];
+  for (const line of lines) {
+    const last = merged[merged.length - 1];
+    const verticalGap = last ? line.bbox.y - (last.bbox.y + last.bbox.height) : 999;
+    const closeEnough = verticalGap < Math.max(28, line.bbox.height * 2.5);
+    const orphanEndingClose = isOrphanKoreanEnding(line.text) && verticalGap < Math.max(60, line.bbox.height * 5);
+    const notTooLong = last ? (last.text.length + line.text.length) < 650 : true;
+    if (last && notTooLong && (closeEnough || orphanEndingClose) && shouldJoinReadingLine(last, line)) {
+      last.text = normalizeKoreanSpacing(`${last.text} ${line.text}`);
+      last.bbox = unionBox(last.bbox, line.bbox);
+    } else {
+      merged.push({ ...line, bbox: { ...line.bbox } });
+    }
+  }
+  return merged.map((block, index) => ({ ...block, id: `p${pageNumber}_b${index + 1}`, order: index + 1 }));
+}
+
 function buildBlocks(textItems, viewport, pageNumber) {
   const items = textItems
     .filter((item) => item.str && item.str.trim())
@@ -444,16 +485,17 @@ function buildBlocks(textItems, viewport, pageNumber) {
     }
   }
 
-  return lines.map((line, index) => {
+  const lineBlocks = lines.map((line, index) => {
     const parts = [...line.parts].sort((a, b) => a.bbox.x - b.bbox.x);
     return {
-      id: `p${pageNumber}_b${index + 1}`,
+      id: `p${pageNumber}_line${index + 1}`,
       page: pageNumber,
       order: index + 1,
-      text: parts.map((part) => part.text).join(' ').replace(/\s+/g, ' ').trim(),
+      text: normalizeKoreanSpacing(parts.map((part) => part.text).join(' ')),
       bbox: line.bbox,
     };
   }).filter((block) => block.text);
+  return mergeReadingLines(lineBlocks, pageNumber);
 }
 
 function pauseAutoScrollForUserInput() {

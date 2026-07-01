@@ -188,6 +188,9 @@ test('server audiobook mode declares production dependencies and fallback-safe p
   assert.match(app, /prefetchNextNarration/);
   assert.match(app, /nextNarration/);
   assert.match(app, /narrationBlobFor/);
+  assert.match(app, /mergeReadingLines/);
+  assert.match(app, /isOrphanKoreanEnding/);
+  assert.match(app, /normalizeKoreanSpacing/);
   assert.match(requirements, /^gTTS/m);
 });
 
