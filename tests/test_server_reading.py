@@ -80,23 +80,16 @@ def test_normalize_tts_pronunciation_applies_reading_script_before_pronunciation
     assert "그다음 유료 전환율 검증 이후" in spoken
 
 
-def test_split_multilingual_tts_segments_keeps_english_terms_in_english_segments():
+def test_split_multilingual_tts_segments_keeps_english_terms_in_korean_voice():
     segments = split_multilingual_tts_segments("NoahAI는 PDF Reader와 SaaS BM을 제공합니다.")
 
-    assert segments == [
-        ("en", "NoahAI"),
-        ("ko", "는"),
-        ("en", "PDF Reader"),
-        ("ko", "와"),
-        ("en", "SaaS BM"),
-        ("ko", "을 제공합니다."),
-    ]
+    assert segments == [("ko", "노아 에이아이는 피디에프 리더와 싸스 비즈니스 모델을 제공합니다.")]
 
 
-def test_split_multilingual_tts_segments_treats_full_english_sentence_as_english():
+def test_split_multilingual_tts_segments_treats_full_english_sentence_as_korean_voice():
     segments = split_multilingual_tts_segments("This service reads PDF documents naturally.")
 
-    assert segments == [("en", "This service reads PDF documents naturally.")]
+    assert segments == [("ko", "디스 서비스 리즈 피디에프 도큐먼츠 내추럴리.")]
 
 
 def test_safe_public_url_accepts_https_only():

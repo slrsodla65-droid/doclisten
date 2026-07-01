@@ -33,7 +33,7 @@ SILENCE_MP3_BASE64 = {
     280: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAADgAAAhAAaGhoaGhoaHR0dHR0dHSAgICAgICAi4uLi4uLi5eXl5eXl5eioqKioqKirq6urq6urrq6urq6urq6xcXFxcXFxdHR0dHR0dHd3d3d3d3d6Ojo6Ojo6PT09PT09PT/////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAIQ9gcbIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMFVV//MUxAsAAANIAAAAAFVVVVVVVVVVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV",
     520: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAAGAAAAwAASEhISFBQUFBYWFhYYGBgYGhoaGhwcHBweHh4eHiAgICAiIiIiJCQkJCYmJiYoKCgoKioqKiosLCwsLi4uLjAwMDAyMjIyNDQ0NDY2NjY2ODg4ODo6Ojo8PDw8Pj4+Pj/////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAMAvyaQwgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMExB//MUxAsAAANIAAAAAE1FMy4xMDBVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV//MUxJoAAANIAAAAAFVVVVVVVVVVVVVV//MUxKUAAANIAAAAAFVVVVVVVVVVVVVV//MUxLAAAANIAAAAAFVVVVVVVVVVVVVV//MUxLsAAANIAAAAAFVVVVVVVVVVVVVV//MUxMYAAANIAAAAAFVVVVVVVVVVVVVV//MUxNEAAANIAAAAAFVVVVVVVVVVVVVV//MUxNwAAANIAAAAAFVVVVVVVVVVVVVV//MUxOcAAANIAAAAAFVVVVVVVVVVVVVV//MUxPIAAANIAAAAAFVVVVVVVVVVVVVV//MUxPQAAANIAAAAAFVVVVVVVVVVVVVV",
 }
-CACHE_VERSION = "audiobook-reading-v2"
+CACHE_VERSION = "audiobook-reading-v3-ko-only"
 RATE_MAP = {
     "0.5": "-50%",
     "0.6": "-40%",
@@ -852,8 +852,55 @@ def normalize_tts_pronunciation(text: str) -> str:
     # TTS가 `사업확장`을 `싸업확장`처럼 뭉개 읽는 것을 줄이기 위한 음성 전용 보정.
     normalized = re.sub(r"사업\s*(확장|계획|모델|전략|구조|운영|부문|단계|화|성장)", r"사업 \1", normalized)
     normalized = re.sub(r"단계별\s*사업\s*확장", "단계별 사업 확장", normalized)
+    normalized = pronounce_english_terms_for_korean_tts(normalized)
     normalized = re.sub(r"([가-힣])\s+([.,!?])", r"\1\2", normalized)
     return normalized
+
+
+ENGLISH_TTS_REPLACEMENTS = [
+    (r"(?<![A-Za-z])DocListen(?![A-Za-z])", "닥 리슨"),
+    (r"(?<![A-Za-z])NoahAI(?![A-Za-z])", "노아 에이아이"),
+    (r"(?<![A-Za-z])Beta\s*Pro(?![A-Za-z])", "베타 프로"),
+    (r"(?<![A-Za-z])Google(?![A-Za-z])", "구글"),
+    (r"(?<![A-Za-z])Chrome(?![A-Za-z])", "크롬"),
+    (r"(?<![A-Za-z])PDF(?![A-Za-z])", "피디에프"),
+    (r"(?<![A-Za-z])TTS(?![A-Za-z])", "티티에스"),
+    (r"(?<![A-Za-z])API(?![A-Za-z])", "에이피아이"),
+    (r"(?<![A-Za-z])AI(?![A-Za-z])", "에이아이"),
+    (r"(?<![A-Za-z])SaaS(?![A-Za-z])", "싸스"),
+    (r"(?<![A-Za-z])BM(?![A-Za-z])", "비즈니스 모델"),
+    (r"(?<![A-Za-z])OCR(?![A-Za-z])", "오씨알"),
+    (r"(?<![A-Za-z])URL(?![A-Za-z])", "유알엘"),
+    (r"(?<![A-Za-z])Reader(?![A-Za-z])", "리더"),
+    (r"(?<![A-Za-z])Free(?![A-Za-z])", "프리"),
+    (r"(?<![A-Za-z])Credit(?![A-Za-z])", "크레딧"),
+    (r"(?<![A-Za-z])This(?![A-Za-z])", "디스"),
+    (r"(?<![A-Za-z])service(?![A-Za-z])", "서비스"),
+    (r"(?<![A-Za-z])reads(?![A-Za-z])", "리즈"),
+    (r"(?<![A-Za-z])documents(?![A-Za-z])", "도큐먼츠"),
+    (r"(?<![A-Za-z])naturally(?![A-Za-z])", "내추럴리"),
+]
+
+
+def pronounce_english_terms_for_korean_tts(text: str) -> str:
+    spoken = str(text or "")
+    for pattern, replacement in ENGLISH_TTS_REPLACEMENTS:
+        spoken = re.sub(pattern, replacement, spoken, flags=re.IGNORECASE)
+    # 남는 짧은 영문 약어도 영어 음성으로 넘기지 않고 한국어 음성이 알파벳처럼 읽게 만든다.
+    alphabet = {
+        "a": "에이", "b": "비", "c": "씨", "d": "디", "e": "이", "f": "에프", "g": "지", "h": "에이치", "i": "아이", "j": "제이",
+        "k": "케이", "l": "엘", "m": "엠", "n": "엔", "o": "오", "p": "피", "q": "큐", "r": "알", "s": "에스", "t": "티",
+        "u": "유", "v": "브이", "w": "더블유", "x": "엑스", "y": "와이", "z": "지",
+    }
+
+    def spell_short(match: re.Match) -> str:
+        word = match.group(0)
+        if len(word) > 6:
+            return word
+        return " ".join(alphabet.get(ch.lower()) or ch for ch in word)
+
+    spoken = re.sub(r"\b[A-Za-z]{1,6}\b", spell_short, spoken)
+    return re.sub(r"\s+", " ", spoken).strip()
 
 
 def synthesize_cached(text: str, voice: str, rate: str) -> Path:
@@ -872,36 +919,9 @@ def synthesize_cached(text: str, voice: str, rate: str) -> Path:
 
 
 def split_multilingual_tts_segments(text: str) -> list[tuple[str, str]]:
-    """한국어 TTS가 영어를 억지로 읽지 않도록 영어 구간을 분리한다."""
-    normalized = re.sub(r"\s+", " ", text).strip()
-    if not normalized:
-        return []
-
-    english_pattern = re.compile(r"[A-Za-z][A-Za-z0-9&+./:#%_-]*(?:\s+[A-Za-z][A-Za-z0-9&+./:#%_-]*)*[.!?]?")
-    segments: list[tuple[str, str]] = []
-    cursor = 0
-    for match in english_pattern.finditer(normalized):
-        start, end = match.span()
-        if start > cursor:
-            ko = normalized[cursor:start].strip()
-            if ko:
-                segments.append(("ko", ko))
-        en = match.group(0).strip()
-        if en:
-            segments.append(("en", en))
-        cursor = end
-    if cursor < len(normalized):
-        ko = normalized[cursor:].strip()
-        if ko:
-            segments.append(("ko", ko))
-
-    merged: list[tuple[str, str]] = []
-    for lang, part in segments:
-        if merged and merged[-1][0] == lang:
-            merged[-1] = (lang, f"{merged[-1][1]} {part}".strip())
-        else:
-            merged.append((lang, part))
-    return merged or [("ko", normalized)]
+    """영어 구간도 영어 음성으로 넘기지 않고 한국어 TTS 하나로 읽게 한다."""
+    normalized = pronounce_english_terms_for_korean_tts(re.sub(r"\s+", " ", text).strip())
+    return [("ko", normalized)] if normalized else []
 
 
 def split_for_human_reading(text: str) -> list[str]:
