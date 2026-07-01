@@ -95,6 +95,25 @@ async function loadPaymentConfig() {
   }
 }
 
+function trackBetaEvent(event) {
+  const payload = JSON.stringify({ event, token: state.token || '' });
+  try {
+    if (navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: 'application/json' });
+      navigator.sendBeacon('/api/event', blob);
+      return;
+    }
+  } catch (error) {
+    console.debug('Beta event beacon unavailable', error);
+  }
+  fetch('/api/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
+    body: payload,
+    keepalive: true,
+  }).catch((error) => console.debug('Beta event unavailable', error));
+}
+
 function authHeaders() {
   return state.token ? { 'X-DocListen-Token': state.token } : {};
 }
@@ -210,6 +229,7 @@ async function deleteAccount() {
 
 async function activateBetaCode() {
   const code = els.betaCodeInput?.value?.trim();
+  trackBetaEvent('beta_code_attempt');
   if (!state.token) {
     setAccountMessage('먼저 Google로 로그인해주세요.');
     return;
@@ -267,6 +287,7 @@ function updateUsageUi() {
 }
 
 async function consumeListeningCredit() {
+  trackBetaEvent('listen_attempt');
   if (!state.token) {
     setAccountMessage('무료 사용량 관리를 위해 먼저 Google 로그인을 해주세요.');
     return false;
@@ -642,6 +663,7 @@ async function loadPdf(file) {
   if (file.size > 30 * 1024 * 1024) {
     throw new Error('PDF file is too large for beta testing');
   }
+  trackBetaEvent('pdf_upload');
   state.fileName = file.name;
   state.pages.clear();
   state.activeBlock = null;
@@ -736,6 +758,14 @@ window.addEventListener('visibilitychange', () => {
   void syncWakeLock();
 });
 
+document.querySelector('a.social-login.google')?.addEventListener('click', () => {
+  trackBetaEvent('login_click');
+});
+
+els.paymentLinks.forEach((link) => {
+  link.addEventListener('click', () => trackBetaEvent('beta_cta_click'));
+});
+
 els.activateBtn?.addEventListener('click', () => {
   void activateBetaCode();
 });
@@ -752,6 +782,7 @@ window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
+trackBetaEvent('page_view');
 void loadPaymentConfig();
 void refreshAccountStatus();
 updateControls();

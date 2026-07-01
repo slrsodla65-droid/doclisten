@@ -81,6 +81,20 @@ Google 로그인 이메일:
           <li>사용 중인 기본 음성/브라우저 설정</li>
         </ul>
         <script>
+          function trackContactEvent(event) {
+            const payload = JSON.stringify({ event });
+            try {
+              if (navigator.sendBeacon) {
+                navigator.sendBeacon('/api/event', new Blob([payload], { type: 'application/json' }));
+                return;
+              }
+            } catch (error) {}
+            fetch('/api/event', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+          }
+          trackContactEvent('contact_view');
+          document.querySelectorAll('a[href^="https://open.kakao.com"]').forEach((link) => {
+            link.addEventListener('click', () => trackContactEvent('beta_cta_click'));
+          });
           document.querySelectorAll('[data-copy-target]').forEach((button) => {
             button.addEventListener('click', async () => {
               const target = document.getElementById(button.dataset.copyTarget);

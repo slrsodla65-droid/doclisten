@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>베타 모집 문구 | DocListen</title>
+    <meta name="description" content="DocListen 유료 베타 모집을 위한 공유 문구와 운영 체크리스트입니다." />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body class="static-page">
+    <main class="app-shell legal-shell">
+      <nav class="site-nav">
+        <a href="./">PDF 듣기</a>
+        <a href="./contact.html">베타 신청</a>
+        <a href="./#pricing">요금제</a>
+      </nav>
+      <article class="legal-card">
+        <p class="eyebrow">Beta Launch Kit</p>
+        <h1>DocListen 유료 베타 모집 문구</h1>
+        <p>초기 사용자에게 링크를 공유할 때 바로 복사해 쓸 수 있는 문구입니다. 핵심은 무료 체험을 먼저 시키고, 계속 쓸 사람만 월 4,900원 베타로 전환하는 것입니다.</p>
+
+        <h2>짧은 공유 문구</h2>
+        <button class="copy-button" type="button" data-copy-target="shortCopy">짧은 문구 복사</button>
+        <pre id="shortCopy" class="copy-template">PDF 읽기 귀찮을 때 듣는 웹앱 만들었습니다.
+강의자료, 논문, 리포트 같은 PDF를 업로드하면 문단별로 읽어줍니다.
+
+무료로 하루 20문단까지 테스트 가능하고, 계속 쓰고 싶으면 월 4,900원 베타로 열어드립니다.
+
+링크:
+https://doclisten.app/</pre>
+
+        <h2>커뮤니티/지인용 문구</h2>
+        <button class="copy-button" type="button" data-copy-target="communityCopy">긴 문구 복사</button>
+        <pre id="communityCopy" class="copy-template">긴 PDF 읽기 힘든 분들 대상으로 DocListen 유료 베타를 열었습니다.
+
+- PDF 업로드 후 문단별 듣기
+- 전문 오디오북 음성 우선 재생
+- 속도조절, 이어듣기, 현재 문단 하이라이트
+- Google 로그인 후 하루 20문단 무료 체험
+- 계속 쓰고 싶은 분은 월 4,900원 Beta Pro 신청 가능
+
+스캔 이미지 PDF보다는 텍스트 선택이 가능한 강의자료, 논문, 업무문서에 가장 적합합니다.
+
+먼저 무료로 테스트해보세요:
+https://doclisten.app/</pre>
+
+        <h2>카카오톡 응대 문구</h2>
+        <button class="copy-button" type="button" data-copy-target="replyCopy">응대 문구 복사</button>
+        <pre id="replyCopy" class="copy-template">안녕하세요. DocListen 유료 베타 신청 감사합니다.
+먼저 doclisten.app에서 Google 로그인 후 실제 사용하실 PDF로 무료 체험을 해보셨는지 확인 부탁드립니다.
+
+Beta Pro는 월 4,900원이며, 입금 확인 후 1회용 베타 코드를 발급드립니다.
+코드는 DocListen 화면의 베타 코드 입력칸에 넣으면 활성화됩니다.
+
+Google 로그인 이메일과 입금자명을 보내주세요.</pre>
+
+        <h2>이번 주 목표</h2>
+        <ul>
+          <li>무료 체험 사용자 10명</li>
+          <li>카카오톡 문의 3명</li>
+          <li>실제 유료 전환 1~3명</li>
+          <li>문제가 생긴 PDF 유형 3개 이상 수집</li>
+        </ul>
+      </article>
+    </main>
+    <script>
+      document.querySelectorAll('[data-copy-target]').forEach((button) => {
+        button.addEventListener('click', async () => {
+          const target = document.getElementById(button.dataset.copyTarget);
+          if (!target) return;
+          try {
+            await navigator.clipboard.writeText(target.textContent.trim());
+            button.textContent = '복사 완료';
+          } catch (error) {
+            button.textContent = '직접 길게 눌러 복사해주세요';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

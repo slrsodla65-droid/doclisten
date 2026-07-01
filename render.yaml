@@ -27,6 +27,8 @@ services:
       # SQLite 저장소: Render Disk에 사용자/결제코드 상태를 영속 저장합니다.
       - key: DOC_LISTEN_USER_STORE_PATH
         value: /var/data/doclisten/users.sqlite3
+      - key: DOC_LISTEN_METRICS_STORE_PATH
+        value: /var/data/doclisten/metrics.json
       # Google 로그인 키는 Render 대시보드에서 Secret 환경변수로 설정합니다.
       # - key: DOC_LISTEN_BASE_URL
       #   value: https://doclisten.app

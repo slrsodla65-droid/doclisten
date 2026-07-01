@@ -194,6 +194,7 @@ test('static policy pages disclose login and paid beta basics', () => {
   const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
   const privacy = readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
   const terms = readFileSync(new URL('../terms.html', import.meta.url), 'utf8');
+  const launch = readFileSync(new URL('../beta-launch.html', import.meta.url), 'utf8');
 
   assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
   assert.match(contact, /월 4,900원/);
@@ -207,6 +208,11 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /결제 확인일로부터 30일/);
   assert.match(contact, /환불 요청/);
   assert.match(html, /돈 내기 전에 3분만 먼저 확인하세요/);
+  assert.match(html, /\.\/beta-launch\.html/);
+  assert.match(launch, /짧은 공유 문구/);
+  assert.match(launch, /커뮤니티\/지인용 문구/);
+  assert.match(launch, /카카오톡 응대 문구/);
+  assert.match(launch, /https:\/\/doclisten\.app\//);
   assert.match(html, /지원 권장 PDF/);
   assert.match(html, /결제 전 품질 확인/);
   assert.match(html, /결제 확인일로부터 30일/);
@@ -227,6 +233,12 @@ test('payment CTAs can be converted to payment links from server config', () => 
   assert.match(html, /data-payment-cta/);
   assert.match(html, /data-beta-price-label/);
   assert.match(app, /fetch\('\/api\/config'/);
+  assert.match(app, /fetch\('\/api\/event'/);
+  assert.match(app, /trackBetaEvent\('page_view'\)/);
+  assert.match(app, /trackBetaEvent\('pdf_upload'\)/);
+  assert.match(app, /trackBetaEvent\('listen_attempt'\)/);
+  assert.match(app, /trackBetaEvent\('beta_cta_click'\)/);
+  assert.match(app, /trackBetaEvent\('login_click'\)/);
   assert.match(app, /카카오톡으로 베타 신청/);
   assert.match(app, /이미 다른 계정에서 사용된 베타 코드/);
   assert.match(app, /베타 코드를 확인하는 중입니다/);
@@ -247,6 +259,8 @@ test('render config enables persistent SQLite storage for paid beta operations',
   assert.match(renderConfig, /buildCommand: "python3 -m pip install -r requirements.txt && python3 -m py_compile server.py"/);
   assert.match(renderConfig, /- key: DOC_LISTEN_USER_STORE_PATH/);
   assert.match(renderConfig, /value: \/var\/data\/doclisten\/users\.sqlite3/);
+  assert.match(renderConfig, /- key: DOC_LISTEN_METRICS_STORE_PATH/);
+  assert.match(renderConfig, /value: \/var\/data\/doclisten\/metrics\.json/);
 });
 
 

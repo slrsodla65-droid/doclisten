@@ -56,8 +56,10 @@ RATE_MAP = {
 }
 DEFAULT_BETA_CONTACT_URL = "https://open.kakao.com/o/sKDe1RBi"
 USER_STORE = Path(os.environ.get("DOC_LISTEN_USER_STORE_PATH", ROOT / ".doclisten_users.json"))
+METRICS_STORE = Path(os.environ.get("DOC_LISTEN_METRICS_STORE_PATH", ROOT / ".doclisten_metrics.json"))
 OAUTH_STATE_STORE = ROOT / ".doclisten_oauth_states.json"
 USER_STORE_LOCK = threading.Lock()
+METRICS_LOCK = threading.Lock()
 OAUTH_STATE_LOCK = threading.Lock()
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEFAULT_ADMIN_EMAILS = {"gkrwodl3@gmail.com"}
@@ -84,6 +86,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(get_public_config())
         if path == "/api/health":
             return self.send_json(get_health_status())
+        if path == "/api/admin/metrics":
+            token = self.headers.get("X-DocListen-Token", "")
+            result = get_admin_metrics(token)
+            return self.send_json(result, status=200 if result.get("ok") else 403)
         if path == "/api/me":
             token = self.headers.get("X-DocListen-Token", "")
             return self.send_json(get_user_status(token))
@@ -106,6 +112,9 @@ class Handler(SimpleHTTPRequestHandler):
                 payload = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
             except json.JSONDecodeError:
                 return self.send_json({"ok": False, "reason": "invalid-json"}, status=400)
+            if path == "/api/event":
+                token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
+                return self.send_json(record_beta_event(str(payload.get("event", "")), token=token))
             if path == "/api/listen":
                 token = self.headers.get("X-DocListen-Token", "") or str(payload.get("token", ""))
                 return self.send_json(record_listen_usage(token))
@@ -198,6 +207,66 @@ def sync_admin_plan(user: dict, auth_provider: str = "") -> bool:
         user["adminGrantedAt"] = datetime.now(timezone.utc).isoformat()
         return True
     return False
+
+
+
+ALLOWED_BETA_EVENTS = {"page_view", "pdf_upload", "listen_attempt", "login_click", "beta_cta_click", "beta_code_attempt", "contact_view"}
+
+
+def empty_metrics_store() -> dict:
+    return {"days": {}}
+
+
+def load_metrics_store(path: Path = METRICS_STORE) -> dict:
+    path = Path(path)
+    if not path.exists():
+        return empty_metrics_store()
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return empty_metrics_store()
+    if not isinstance(data, dict) or not isinstance(data.get("days"), dict):
+        return empty_metrics_store()
+    return data
+
+
+def save_metrics_store(data: dict, path: Path = METRICS_STORE):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(path)
+
+
+def record_beta_event(event: str, token: str = "", path: Path = METRICS_STORE, day: str | None = None) -> dict:
+    event = str(event or "").strip()
+    if event not in ALLOWED_BETA_EVENTS:
+        return {"ok": False, "reason": "unsupported-event"}
+    day = day or today_key()
+    plan = "anonymous"
+    if token:
+        _, user = find_user_by_token(token)
+        if user:
+            plan = user.get("plan", "free")
+    with METRICS_LOCK:
+        data = load_metrics_store(path)
+        day_bucket = data.setdefault("days", {}).setdefault(day, {"events": {}, "plans": {}})
+        day_bucket.setdefault("events", {})[event] = int(day_bucket.setdefault("events", {}).get(event, 0)) + 1
+        plan_bucket = day_bucket.setdefault("plans", {}).setdefault(plan, {})
+        plan_bucket[event] = int(plan_bucket.get(event, 0)) + 1
+        save_metrics_store(data, path)
+    return {"ok": True, "event": event, "day": day}
+
+
+def get_admin_metrics(token: str, path: Path = METRICS_STORE, user_path: Path = USER_STORE) -> dict:
+    data, user = find_user_by_token(token, user_path)
+    if not user:
+        return {"ok": False, "reason": "not-authenticated"}
+    if sync_admin_plan(user, user.get("authProvider", "")):
+        save_user_store(data, user_path)
+    if user.get("plan") != "admin":
+        return {"ok": False, "reason": "admin-required"}
+    return {"ok": True, "metrics": load_metrics_store(path)}
 
 
 def is_sqlite_user_store(path: Path = USER_STORE) -> bool:

@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, concat_mp3, delete_user_account, extract_oauth_email, find_user_by_token, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, make_silence_mp3, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
+from server import build_oauth_authorize_url, concat_mp3, delete_user_account, extract_oauth_email, find_user_by_token, get_admin_metrics, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, make_silence_mp3, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_beta_event, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -397,6 +397,39 @@ def test_health_status_exposes_safe_operational_readiness(tmp_path, monkeypatch)
     assert status["betaActivationConfigured"] is True
     assert status["adminEmailConfigured"] is True
     assert "secret" not in str(status).lower()
+
+
+def test_beta_event_metrics_count_launch_funnel_without_external_analytics(tmp_path):
+    metrics = tmp_path / "metrics.json"
+
+    view = record_beta_event("page_view", path=metrics, day="2026-07-01")
+    upload = record_beta_event("pdf_upload", path=metrics, day="2026-07-01")
+    bad = record_beta_event("raw-email", path=metrics, day="2026-07-01")
+
+    data = metrics.read_text(encoding="utf-8")
+    assert view["ok"] is True
+    assert upload["ok"] is True
+    assert bad["ok"] is False
+    assert '"page_view": 1' in data
+    assert '"pdf_upload": 1' in data
+    assert "raw-email" not in data
+
+
+def test_admin_can_read_beta_metrics_but_free_user_cannot(tmp_path, monkeypatch):
+    user_store = tmp_path / "users.json"
+    metrics = tmp_path / "metrics.json"
+    monkeypatch.setenv("DOC_LISTEN_ADMIN_EMAILS", "owner@example.com")
+    admin = get_or_create_user("owner@example.com", user_store, auth_provider="google")
+    free = get_or_create_user("free@example.com", user_store, auth_provider="google")
+    record_beta_event("beta_cta_click", path=metrics, day="2026-07-01")
+
+    admin_view = get_admin_metrics(admin["token"], metrics, user_store)
+    free_view = get_admin_metrics(free["token"], metrics, user_store)
+
+    assert admin_view["ok"] is True
+    assert admin_view["metrics"]["days"]["2026-07-01"]["events"]["beta_cta_click"] == 1
+    assert free_view["ok"] is False
+    assert free_view["reason"] == "admin-required"
 
 
 def test_oauth_provider_config_uses_environment(monkeypatch):
