@@ -1,0 +1,19 @@
+{
+  "name": "DocListen",
+  "short_name": "DocListen",
+  "description": "PDF를 업로드하고 문단별로 자연스럽게 듣는 웹앱",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070a12",
+  "theme_color": "#7c3aed",
+  "lang": "ko-KR",
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

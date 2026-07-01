@@ -97,7 +97,10 @@ h1 { margin: 0; font-size: clamp(22px, 5vw, 36px); }
   color: #04130a;
   background: #86efac;
   font-weight: 900;
+  border: 0;
 }
+.as-button { display: inline-flex; align-items: center; justify-content: center; }
+.install-panel { border-color: rgba(124, 58, 237, 0.42); background: rgba(124, 58, 237, 0.1); }
 .paywall-notice {
   max-width: 900px;
   margin: 12px auto;
@@ -278,7 +281,7 @@ select {
   margin: 14px auto 0;
   max-width: 900px;
 }
-.pricing-card, .info-grid article, .legal-card {
+.pricing-card, .info-grid article, .legal-card, .metric-card {
   border: 1px solid var(--line);
   background: rgba(17, 24, 39, 0.78);
   border-radius: 22px;
@@ -296,6 +299,17 @@ select {
   margin: 24px auto 12px;
   max-width: 900px;
 }
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 22px;
+}
+.metric-card strong { display: block; color: #bfdbfe; font-size: 13px; }
+.metric-card span { display: block; margin-top: 8px; font-size: 30px; font-weight: 900; color: #fff; }
+.metric-card p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.daily-metrics { display: grid; gap: 10px; }
+.daily-metrics ul { margin: 8px 0 0; padding-left: 20px; }
 .info-grid h2, .legal-card h2 { font-size: 18px; margin: 0 0 8px; }
 .info-grid p, .legal-card p, .legal-card li { color: var(--muted); line-height: 1.7; }
 .site-footer { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 24px 0; }
@@ -336,7 +350,7 @@ select {
   .topbar { align-items: flex-start; flex-direction: column; }
   .top-actions { width: 100%; justify-content: flex-start; }
   .compact-nav { order: 2; }
-  .info-grid, .pricing-grid, .guide-grid { grid-template-columns: 1fr; }
+  .info-grid, .pricing-grid, .guide-grid, .metric-grid { grid-template-columns: 1fr; }
   .usage-panel { align-items: flex-start; flex-direction: column; }
   .social-login-row { grid-template-columns: 1fr; }
   .account-row { align-items: stretch; flex-direction: column; }

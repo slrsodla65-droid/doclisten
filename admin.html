@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 베타 현황 | DocListen</title>
+    <meta name="description" content="DocListen 유료 베타 전환 지표를 확인하는 관리자 페이지입니다." />
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body class="static-page">
+    <main class="app-shell legal-shell">
+      <nav class="site-nav">
+        <a href="./">PDF 듣기</a>
+        <a href="./beta-launch.html">공유문구</a>
+        <a href="./contact.html">베타 신청</a>
+      </nav>
+      <article class="legal-card">
+        <p class="eyebrow">Admin Metrics</p>
+        <h1>베타 전환 현황</h1>
+        <p>관리자 Google 계정으로 로그인한 브라우저에서만 볼 수 있습니다. 홍보 후 실제 유료 전환 가능성을 판단하기 위한 최소 지표입니다.</p>
+        <p id="adminStatus" class="notice-box">관리자 권한을 확인하는 중입니다...</p>
+
+        <section id="metricsDashboard" class="hidden">
+          <h2>오늘 핵심 지표</h2>
+          <div id="todayMetrics" class="metric-grid" aria-label="오늘 전환 지표"></div>
+
+          <h2>전환율</h2>
+          <div id="conversionMetrics" class="metric-grid" aria-label="전환율"></div>
+
+          <h2>최근 일별 기록</h2>
+          <div id="dailyMetrics" class="daily-metrics"></div>
+
+          <h2>운영 판단 기준</h2>
+          <ul>
+            <li>PDF 업로드율이 낮으면 첫 화면/업로드 안내를 개선합니다.</li>
+            <li>듣기 시도는 많은데 카카오톡 클릭이 낮으면 가격/가치 제안을 개선합니다.</li>
+            <li>카카오톡 클릭은 많은데 실제 결제가 낮으면 응대 문구, 신뢰, 환불 안내를 보강합니다.</li>
+            <li>무료 한도 도달자가 생기면 우선적으로 유료 전환 제안을 합니다.</li>
+          </ul>
+        </section>
+      </article>
+    </main>
+    <script type="module" src="./src/admin.mjs?v=1"></script>
+  </body>
+</html>

@@ -43,6 +43,8 @@ const els = {
   accountStatus: document.querySelector('#accountStatus'),
   logoutBtn: document.querySelector('#logoutBtn'),
   deleteAccountBtn: document.querySelector('#deleteAccountBtn'),
+  installGuideBtn: document.querySelector('#installGuideBtn'),
+  installGuide: document.querySelector('#installGuide'),
 };
 
 const state = {
@@ -778,11 +780,18 @@ els.deleteAccountBtn?.addEventListener('click', () => {
   void deleteAccount();
 });
 
+els.installGuideBtn?.addEventListener('click', () => {
+  els.installGuide?.classList.toggle('hidden');
+});
+
 window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
 trackBetaEvent('page_view');
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js').catch((error) => console.debug('Service worker registration failed', error));
+}
 void loadPaymentConfig();
 void refreshAccountStatus();
 updateControls();

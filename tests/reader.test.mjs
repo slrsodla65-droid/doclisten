@@ -209,6 +209,10 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /환불 요청/);
   assert.match(html, /돈 내기 전에 3분만 먼저 확인하세요/);
   assert.match(html, /\.\/beta-launch\.html/);
+  assert.match(html, /\.\/admin\.html/);
+  assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
+  assert.match(html, /앱처럼 쓰기/);
+  assert.match(html, /홈 화면에 추가/);
   assert.match(launch, /짧은 공유 문구/);
   assert.match(launch, /커뮤니티\/지인용 문구/);
   assert.match(launch, /카카오톡 응대 문구/);
@@ -286,4 +290,23 @@ test('only Google social login button is present with clear account controls', (
   assert.doesNotMatch(html, /네이버로 계속하기/);
   assert.doesNotMatch(html, /\/api\/oauth\/start\?provider=kakao/);
   assert.doesNotMatch(html, /\/api\/oauth\/start\?provider=naver/);
+});
+
+
+test('admin dashboard and PWA assets are present for launch operations', () => {
+  const admin = readFileSync(new URL('../admin.html', import.meta.url), 'utf8');
+  const adminScript = readFileSync(new URL('../src/admin.mjs', import.meta.url), 'utf8');
+  const manifest = readFileSync(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
+  const serviceWorker = readFileSync(new URL('../service-worker.js', import.meta.url), 'utf8');
+
+  assert.match(admin, /베타 전환 현황/);
+  assert.match(admin, /todayMetrics/);
+  assert.match(admin, /conversionMetrics/);
+  assert.match(adminScript, /\/api\/admin\/metrics/);
+  assert.match(adminScript, /방문→업로드/);
+  assert.match(adminScript, /듣기→신청 클릭/);
+  assert.match(manifest, /"name": "DocListen"/);
+  assert.match(manifest, /"display": "standalone"/);
+  assert.match(serviceWorker, /CACHE_NAME/);
+  assert.match(serviceWorker, /beta-launch\.html/);
 });

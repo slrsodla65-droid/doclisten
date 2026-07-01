@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>DocListen | PDF를 귀로 듣는 웹앱</title>
     <meta name="description" content="긴 PDF를 눈으로만 읽지 말고, 전문 오디오북 음성처럼 문단 사이에 숨을 두고 자연스럽게 들어보세요." />
+    <meta name="theme-color" content="#7c3aed" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
@@ -20,6 +23,7 @@
             <a href="#pricing">요금제</a>
             <a href="./contact.html">베타 문의</a>
             <a href="./beta-launch.html">공유문구</a>
+            <a href="./admin.html">관리자</a>
           </nav>
           <div class="upload-control">
             <button id="uploadBtn" class="upload-button" type="button">PDF 업로드</button>
@@ -55,6 +59,24 @@
           <button id="activateBtn" type="button">유료 해제</button>
         </div>
         <p id="accountMessage" class="account-message">Google 로그인하면 사용량이 서버에 저장되어 기기를 바꿔도 같은 한도가 적용됩니다.</p>
+      </section>
+
+      <section class="usage-panel install-panel" aria-label="앱 설치 안내">
+        <div>
+          <strong>앱처럼 쓰기</strong>
+          <p>Chrome 또는 Samsung Internet에서 메뉴 → 홈 화면에 추가를 누르면 앱처럼 바로 열 수 있습니다. 정식 플레이스토어 출시는 유료 베타 검증 후 진행합니다.</p>
+        </div>
+        <button id="installGuideBtn" class="mini-cta as-button" type="button">설치 안내 보기</button>
+      </section>
+
+      <section class="account-panel hidden" id="installGuide" aria-label="홈 화면 추가 방법">
+        <h2>홈 화면에 추가하는 방법</h2>
+        <ol class="payment-steps">
+          <li>이 페이지를 Chrome 또는 Samsung Internet으로 엽니다.</li>
+          <li>브라우저 메뉴를 누릅니다.</li>
+          <li>“홈 화면에 추가” 또는 “앱 설치”를 선택합니다.</li>
+          <li>DocListen 아이콘으로 바로 실행합니다.</li>
+        </ol>
       </section>
 
       <section id="paywallNotice" class="paywall-notice hidden" role="status">
@@ -221,6 +243,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=49"></script>
+    <script type="module" src="./src/app.mjs?v=50"></script>
   </body>
 </html>
