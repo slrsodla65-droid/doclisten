@@ -218,26 +218,35 @@ async function activateBetaCode() {
     setAccountMessage('베타 코드를 입력해주세요.');
     return;
   }
-  const response = await fetch('/api/activate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify({ code }),
-  });
-  const payload = await response.json();
-  if (!response.ok || !payload.ok) {
-    if (payload.reason === 'code-already-used') {
-      setAccountMessage('이미 다른 계정에서 사용된 베타 코드입니다. 카카오톡으로 새 코드를 요청해주세요.');
+  els.activateBtn.disabled = true;
+  setAccountMessage('베타 코드를 확인하는 중입니다...');
+  try {
+    const response = await fetch('/api/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ code }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) {
+      if (payload.reason === 'code-already-used') {
+        setAccountMessage('이미 다른 계정에서 사용된 베타 코드입니다. 카카오톡으로 새 코드를 요청해주세요.');
+        return;
+      }
+      if (payload.reason === 'code-not-configured') {
+        setAccountMessage('베타 코드가 아직 서버에 설정되지 않았습니다. 카카오톡으로 운영자에게 확인해주세요.');
+        return;
+      }
+      setAccountMessage('베타 코드가 맞지 않습니다. 카카오톡으로 받은 코드를 다시 확인해주세요.');
       return;
     }
-    if (payload.reason === 'code-not-configured') {
-      setAccountMessage('베타 코드가 아직 서버에 설정되지 않았습니다. 카카오톡으로 운영자에게 확인해주세요.');
-      return;
-    }
-    setAccountMessage('베타 코드가 맞지 않습니다. 카카오톡으로 받은 코드를 다시 확인해주세요.');
-    return;
+    applyServerStatus(payload);
+    setAccountMessage('Beta Pro 활성화 완료. 오늘 한도 없이 사용할 수 있습니다.');
+  } catch (error) {
+    console.debug('Beta activation unavailable', error);
+    setAccountMessage('베타 코드 확인에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
+  } finally {
+    els.activateBtn.disabled = false;
   }
-  applyServerStatus(payload);
-  setAccountMessage('Beta Pro 활성화 완료. 오늘 한도 없이 사용할 수 있습니다.');
 }
 
 function updateUsageUi() {
@@ -627,6 +636,12 @@ async function speakBlock(block) {
 
 async function loadPdf(file) {
   stopSpeech();
+  if (!file?.name?.toLowerCase().endsWith('.pdf') && file?.type !== 'application/pdf') {
+    throw new Error('Only PDF files are supported');
+  }
+  if (file.size > 30 * 1024 * 1024) {
+    throw new Error('PDF file is too large for beta testing');
+  }
   state.fileName = file.name;
   state.pages.clear();
   state.activeBlock = null;
@@ -654,7 +669,7 @@ els.fileInput.addEventListener('change', async (event) => {
     await loadPdf(file);
   } catch (error) {
     console.error(error);
-    els.currentText.textContent = 'PDF를 불러오지 못했습니다. 다른 파일로 다시 시도해주세요.';
+    els.currentText.textContent = 'PDF를 불러오지 못했습니다. 30MB 이하의 텍스트형 PDF로 다시 시도해주세요. 계속 실패하면 카카오톡으로 PDF 종류와 기기 정보를 알려주세요.';
   }
 });
 

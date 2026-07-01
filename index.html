@@ -16,6 +16,7 @@
         </div>
         <div class="top-actions">
           <nav class="site-nav compact-nav" aria-label="주요 메뉴">
+            <a href="#guide">사용가이드</a>
             <a href="#pricing">요금제</a>
             <a href="./contact.html">베타 문의</a>
           </nav>
@@ -57,7 +58,7 @@
 
       <section id="paywallNotice" class="paywall-notice hidden" role="status">
         <strong>오늘 무료 듣기 한도를 모두 사용했습니다.</strong>
-        <p>계속 사용하려면 유료 베타를 신청해주세요. 베타 기간에는 실제 결제 연결 전까지 문의 기반으로 선착순 전환을 받습니다.</p>
+        <p>계속 사용하려면 유료 베타를 신청해주세요. Google 로그인 이메일을 카카오톡으로 보내면 입금 확인 후 Beta Pro 코드를 발급합니다.</p>
         <a class="cta-button" href="./contact.html" data-payment-cta>카카오톡으로 문의하기</a>
       </section>
 
@@ -66,12 +67,36 @@
           <h2>DocListen으로 PDF를 업로드하세요</h2>
           <p>PDF 화면에서 원하는 문단을 누르거나, 듣기 버튼으로 현재 위치부터 들을 수 있습니다.</p>
           <ul>
+            <li>먼저 Google 로그인 → 무료 20문단 체험</li>
             <li>문단 터치 → 해당 문단부터 읽기</li>
             <li>전문 오디오북 음성 → 문장 단위 휴지와 자연 낭독</li>
             <li>듣기 / 일시정지 / 이전 문단 / 다음 문단</li>
             <li>현재 읽는 문단 하이라이트</li>
             <li>마지막 읽은 위치 저장</li>
           </ul>
+        </div>
+      </section>
+
+      <section id="guide" class="guide-section" aria-label="베타 사용 가이드">
+        <p class="eyebrow">Beta Ready Guide</p>
+        <h2>돈 내기 전에 3분만 먼저 확인하세요.</h2>
+        <div class="guide-grid">
+          <article>
+            <strong>1. 무료 체험</strong>
+            <p>Google 로그인 후 실제로 듣고 싶은 PDF를 올려 오늘 20문단까지 무료로 테스트합니다.</p>
+          </article>
+          <article>
+            <strong>2. 품질 확인</strong>
+            <p>본문 문단, 속도조절, 이어듣기, 모바일 화면 꺼짐 방지, 문단 하이라이트가 내 문서에 맞는지 확인합니다.</p>
+          </article>
+          <article>
+            <strong>3. 베타 전환</strong>
+            <p>계속 쓸 가치가 있으면 카카오톡으로 Google 로그인 이메일을 보내고 Beta Pro 코드를 받습니다.</p>
+          </article>
+        </div>
+        <div class="guide-note">
+          <strong>지원 권장 PDF</strong>
+          <span>텍스트 선택이 가능한 강의자료, 리포트, 논문, 업무 문서에 적합합니다. 스캔 이미지 PDF나 복잡한 표 중심 문서는 음성 품질이 떨어질 수 있습니다.</span>
         </div>
       </section>
 
@@ -90,7 +115,7 @@
       <section class="monetization-hero" aria-label="유료 베타 안내">
         <p class="eyebrow">Beta Monetization</p>
         <h2>DocListen 유료 베타를 카카오톡으로 신청하세요.</h2>
-        <p>월 4,900원 베타 이용권을 카카오톡으로 신청하고 계좌이체 확인 후 사용 안내를 받을 수 있습니다.</p>
+        <p>월 4,900원 베타 이용권을 카카오톡으로 신청하고 계좌이체 확인 후 1회용 Beta Pro 코드를 받을 수 있습니다. 결제 전 무료 체험으로 내 PDF와 음성 품질을 먼저 확인하세요.</p>
         <div class="hero-actions">
           <a class="cta-button" href="./contact.html" data-payment-cta>카카오톡으로 문의하기</a>
           <a class="ghost-button" href="./file-policy.html">파일 처리 방식 보기</a>
@@ -144,6 +169,21 @@
           <a href="./contact.html">문의</a>
         </div>
       </section>
+
+      <section class="info-grid beta-ops" aria-label="베타 운영 안내">
+        <article>
+          <h2>결제 전 품질 확인</h2>
+          <p>Free 체험으로 내 문서에서 음성, 속도, 모바일 재생을 먼저 확인하도록 안내합니다.</p>
+        </article>
+        <article>
+          <h2>수동 전환 절차</h2>
+          <p>카카오톡 신청 → 입금 확인 → 1회용 베타 코드 발급 → 앱에서 Beta Pro 활성화 흐름입니다.</p>
+        </article>
+        <article>
+          <h2>오류 대응</h2>
+          <p>PDF 페이지, 문제 문장, 기기/브라우저 정보를 받아 음성 품질과 업로드 오류를 빠르게 수정합니다.</p>
+        </article>
+      </section>
     </main>
 
     <footer id="player" class="player hidden">
@@ -180,6 +220,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=47"></script>
+    <script type="module" src="./src/app.mjs?v=48"></script>
   </body>
 </html>

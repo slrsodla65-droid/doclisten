@@ -198,11 +198,17 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
   assert.match(contact, /월 4,900원/);
   assert.match(contact, /베타 코드/);
-  assert.match(contact, /카카오톡 결제 신청 순서/);
+  assert.match(contact, /카카오톡 베타 신청 순서/);
+  assert.match(contact, /신청 양식 복사/);
+  assert.match(contact, /무료 체험 확인/);
+  assert.match(contact, /텍스트 선택이 가능한 PDF/);
   assert.match(contact, /입금자명/);
   assert.match(contact, /Google 로그인 이메일/);
   assert.match(contact, /결제 확인일로부터 30일/);
   assert.match(contact, /환불 요청/);
+  assert.match(html, /돈 내기 전에 3분만 먼저 확인하세요/);
+  assert.match(html, /지원 권장 PDF/);
+  assert.match(html, /결제 전 품질 확인/);
   assert.match(html, /결제 확인일로부터 30일/);
   assert.match(terms, /유료 베타 이용기간/);
   assert.match(terms, /결제 확인일로부터 30일/);
@@ -223,6 +229,10 @@ test('payment CTAs can be converted to payment links from server config', () => 
   assert.match(app, /fetch\('\/api\/config'/);
   assert.match(app, /카카오톡으로 베타 신청/);
   assert.match(app, /이미 다른 계정에서 사용된 베타 코드/);
+  assert.match(app, /베타 코드를 확인하는 중입니다/);
+  assert.match(app, /베타 코드 확인에 실패했습니다/);
+  assert.match(app, /30 \* 1024 \* 1024/);
+  assert.match(app, /30MB 이하의 텍스트형 PDF/);
 });
 
 
