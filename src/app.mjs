@@ -615,6 +615,8 @@ function getNextLoadedBlock(block) {
 }
 
 function prefetchUpcomingNarration(fromBlock) {
+  if (!state.token) return;
+  if (state.serverUsage?.plan === 'free' && state.serverUsage?.reached) return;
   let cursor = fromBlock;
   for (let index = 0; index < NARRATION_PREFETCH_AHEAD; index += 1) {
     cursor = getNextLoadedBlock(cursor);
