@@ -67,12 +67,7 @@ const state = {
   socialLoginProviders: [],
   currentAudio: null,
   currentAudioUrl: '',
-  narrationCache: new Map(),
-  narrationPrefetches: new Map(),
 };
-
-const MAX_NARRATION_CACHE_ITEMS = 24;
-const NARRATION_PREFETCH_AHEAD = 3;
 
 const canvasContext = els.pdfCanvas.getContext('2d');
 
@@ -560,73 +555,6 @@ function rateForServerTts() {
   return value === '2.0' ? '2' : value;
 }
 
-function narrationCacheKey(block) {
-  return `${block?.id || ''}:${rateForServerTts()}:${block?.text || ''}`;
-}
-
-function rememberNarrationBlob(key, blob) {
-  if (!key || !blob) return;
-  if (state.narrationCache.has(key)) state.narrationCache.delete(key);
-  state.narrationCache.set(key, blob);
-  while (state.narrationCache.size > MAX_NARRATION_CACHE_ITEMS) {
-    const oldestKey = state.narrationCache.keys().next().value;
-    state.narrationCache.delete(oldestKey);
-  }
-}
-
-async function fetchServerNarrationBlob(block) {
-  const key = narrationCacheKey(block);
-  const cached = state.narrationCache.get(key);
-  if (cached) return cached;
-  const inFlight = state.narrationPrefetches.get(key);
-  if (inFlight) return inFlight;
-
-  const request = fetch('/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text: block.text,
-      voice: 'gtts-ko-human',
-      rate: rateForServerTts(),
-    }),
-  })
-    .then((response) => {
-      if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
-      return response.blob();
-    })
-    .then((blob) => {
-      rememberNarrationBlob(key, blob);
-      return blob;
-    })
-    .finally(() => {
-      state.narrationPrefetches.delete(key);
-    });
-  state.narrationPrefetches.set(key, request);
-  return request;
-}
-
-function getNextLoadedBlock(block) {
-  if (!block) return null;
-  const blocks = state.pages.get(block.page) || [];
-  const index = blocks.findIndex((item) => item.id === block.id);
-  if (index >= 0 && index + 1 < blocks.length) return blocks[index + 1];
-  const nextPageBlocks = state.pages.get(block.page + 1) || [];
-  return nextPageBlocks[0] || null;
-}
-
-function prefetchUpcomingNarration(fromBlock) {
-  let cursor = fromBlock;
-  for (let index = 0; index < NARRATION_PREFETCH_AHEAD; index += 1) {
-    cursor = getNextLoadedBlock(cursor);
-    if (!cursor) return;
-    const key = narrationCacheKey(cursor);
-    if (state.narrationCache.has(key) || state.narrationPrefetches.has(key)) continue;
-    fetchServerNarrationBlob(cursor).catch((error) => {
-      console.debug('Narration prefetch unavailable', error);
-    });
-  }
-}
-
 async function continueToNextBlock(runId) {
   if (runId !== state.speechRunId) return;
   const next = await getNextBlock();
@@ -668,7 +596,19 @@ function fallbackToBrowserSpeech(block, runId) {
 }
 
 async function playServerNarration(block, runId) {
-  const blob = await fetchServerNarrationBlob(block);
+  const response = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text: block.text,
+      voice: 'gtts-ko-human',
+      rate: rateForServerTts(),
+    }),
+  });
+  if (!response.ok) throw new Error(`TTS failed: ${response.status}`);
+  if (runId !== state.speechRunId) return;
+
+  const blob = await response.blob();
   if (runId !== state.speechRunId) return;
 
   releaseCurrentAudio();
@@ -683,7 +623,6 @@ async function playServerNarration(block, runId) {
     state.speaking = true;
     state.paused = false;
     updateControls();
-    prefetchUpcomingNarration(block);
   };
   audio.onended = () => {
     void continueToNextBlock(runId);
@@ -729,8 +668,6 @@ async function loadPdf(file) {
   trackBetaEvent('pdf_upload');
   state.fileName = file.name;
   state.pages.clear();
-  state.narrationCache.clear();
-  state.narrationPrefetches.clear();
   state.activeBlock = null;
   els.docTitle.textContent = file.name;
   els.currentText.textContent = 'PDF를 불러오는 중입니다...';
@@ -741,7 +678,6 @@ async function loadPdf(file) {
   const saved = loadProgress();
   await renderPage(saved?.page || 1, saved?.blockId || null);
   els.currentText.textContent = state.activeBlock?.text || '듣기 버튼을 누르거나 문단을 터치하세요.';
-  prefetchUpcomingNarration(state.activeBlock);
   updateControls();
 }
 
