@@ -33,7 +33,7 @@ SILENCE_MP3_BASE64 = {
     280: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAADgAAAhAAaGhoaGhoaHR0dHR0dHSAgICAgICAi4uLi4uLi5eXl5eXl5eioqKioqKirq6urq6urrq6urq6urq6xcXFxcXFxdHR0dHR0dHd3d3d3d3d6Ojo6Ojo6PT09PT09PT/////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAIQ9gcbIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMFVV//MUxAsAAANIAAAAAFVVVVVVVVVVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV",
     520: "SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEwAAAAAAAAAAAAEluZm8AAAAPAAAAGAAAAwAASEhISFBQUFBYWFhYYGBgYGhoaGhwcHBweHh4eHiAgICAiIiIiJCQkJCYmJiYoKCgoKioqKiosLCwsLi4uLjAwMDAyMjIyNDQ0NDY2NjY2ODg4ODo6Ojo8PDw8Pj4+Pj/////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQDAAAAAAAAAAMAvyaQwgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//MUxAAAAANIAAAAAExBTUUzLjEwMExB//MUxAsAAANIAAAAAE1FMy4xMDBVVVVV//MUxBYAAANIAAAAAFVVVVVVVVVVVVVV//MUxCEAAANIAAAAAFVVVVVVVVVVVVVV//MUxCwAAANIAAAAAFVVVVVVVVVVVVVV//MUxDcAAANIAAAAAFVVVVVVVVVVVVVV//MUxEIAAANIAAAAAFVVVVVVVVVVVVVV//MUxE0AAANIAAAAAFVVVVVVVVVVVVVV//MUxFgAAANIAAAAAFVVVVVVVVVVVVVV//MUxGMAAANIAAAAAFVVVVVVVVVVVVVV//MUxG4AAANIAAAAAFVVVVVVVVVVVVVV//MUxHkAAANIAAAAAFVVVVVVVVVVVVVV//MUxIQAAANIAAAAAFVVVVVVVVVVVVVV//MUxI8AAANIAAAAAFVVVVVVVVVVVVVV//MUxJoAAANIAAAAAFVVVVVVVVVVVVVV//MUxKUAAANIAAAAAFVVVVVVVVVVVVVV//MUxLAAAANIAAAAAFVVVVVVVVVVVVVV//MUxLsAAANIAAAAAFVVVVVVVVVVVVVV//MUxMYAAANIAAAAAFVVVVVVVVVVVVVV//MUxNEAAANIAAAAAFVVVVVVVVVVVVVV//MUxNwAAANIAAAAAFVVVVVVVVVVVVVV//MUxOcAAANIAAAAAFVVVVVVVVVVVVVV//MUxPIAAANIAAAAAFVVVVVVVVVVVVVV//MUxPQAAANIAAAAAFVVVVVVVVVVVVVV",
 }
-CACHE_VERSION = "audiobook-reading-v3-ko-only"
+CACHE_VERSION = "audiobook-reading-v4-english-words-ko"
 RATE_MAP = {
     "0.5": "-50%",
     "0.6": "-40%",
@@ -862,6 +862,12 @@ ENGLISH_TTS_REPLACEMENTS = [
     (r"(?<![A-Za-z])DocListen(?![A-Za-z])", "닥 리슨"),
     (r"(?<![A-Za-z])NoahAI(?![A-Za-z])", "노아 에이아이"),
     (r"(?<![A-Za-z])Beta\s*Pro(?![A-Za-z])", "베타 프로"),
+    (r"(?<![A-Za-z])B2B\s*Team(?![A-Za-z])", "비투비 팀"),
+    (r"(?<![A-Za-z])B2C(?![A-Za-z])", "비투씨"),
+    (r"(?<![A-Za-z])B2B(?![A-Za-z])", "비투비"),
+    (r"(?<![A-Za-z])BYOK(?![A-Za-z])", "비와이오케이"),
+    (r"(?<![A-Za-z])KPI(?![A-Za-z])", "케이피아이"),
+    (r"(?<![A-Za-z])XAI(?![A-Za-z])", "엑스에이아이"),
     (r"(?<![A-Za-z])Google(?![A-Za-z])", "구글"),
     (r"(?<![A-Za-z])Chrome(?![A-Za-z])", "크롬"),
     (r"(?<![A-Za-z])PDF(?![A-Za-z])", "피디에프"),
@@ -874,6 +880,11 @@ ENGLISH_TTS_REPLACEMENTS = [
     (r"(?<![A-Za-z])URL(?![A-Za-z])", "유알엘"),
     (r"(?<![A-Za-z])Reader(?![A-Za-z])", "리더"),
     (r"(?<![A-Za-z])Free(?![A-Za-z])", "프리"),
+    (r"(?<![A-Za-z])Basic(?![A-Za-z])", "베이직"),
+    (r"(?<![A-Za-z])Starter(?![A-Za-z])", "스타터"),
+    (r"(?<![A-Za-z])Plus(?![A-Za-z])", "플러스"),
+    (r"(?<![A-Za-z])Pro(?![A-Za-z])", "프로"),
+    (r"(?<![A-Za-z])Enterprise(?![A-Za-z])", "엔터프라이즈"),
     (r"(?<![A-Za-z])Credit(?![A-Za-z])", "크레딧"),
     (r"(?<![A-Za-z])This(?![A-Za-z])", "디스"),
     (r"(?<![A-Za-z])service(?![A-Za-z])", "서비스"),
@@ -887,20 +898,19 @@ def pronounce_english_terms_for_korean_tts(text: str) -> str:
     spoken = str(text or "")
     for pattern, replacement in ENGLISH_TTS_REPLACEMENTS:
         spoken = re.sub(pattern, replacement, spoken, flags=re.IGNORECASE)
-    # 남는 짧은 영문 약어도 영어 음성으로 넘기지 않고 한국어 음성이 알파벳처럼 읽게 만든다.
+    # 남는 짧은 영문 약어는 한국어 음성 안에서 알파벳 이름으로 읽게 하되,
+    # Basic/Starter 같은 일반 영어 단어까지 철자 낭독으로 바꾸지는 않는다.
     alphabet = {
         "a": "에이", "b": "비", "c": "씨", "d": "디", "e": "이", "f": "에프", "g": "지", "h": "에이치", "i": "아이", "j": "제이",
         "k": "케이", "l": "엘", "m": "엠", "n": "엔", "o": "오", "p": "피", "q": "큐", "r": "알", "s": "에스", "t": "티",
         "u": "유", "v": "브이", "w": "더블유", "x": "엑스", "y": "와이", "z": "지",
     }
 
-    def spell_short(match: re.Match) -> str:
+    def spell_acronym(match: re.Match) -> str:
         word = match.group(0)
-        if len(word) > 6:
-            return word
         return " ".join(alphabet.get(ch.lower()) or ch for ch in word)
 
-    spoken = re.sub(r"\b[A-Za-z]{1,6}\b", spell_short, spoken)
+    spoken = re.sub(r"\b[A-Z]{2,6}\b", spell_acronym, spoken)
     return re.sub(r"\s+", " ", spoken).strip()
 
 

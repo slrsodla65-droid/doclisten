@@ -86,6 +86,22 @@ def test_split_multilingual_tts_segments_keeps_english_terms_in_korean_voice():
     assert segments == [("ko", "노아 에이아이는 피디에프 리더와 싸스 비즈니스 모델을 제공합니다.")]
 
 
+def test_doclisten_plan_names_do_not_spell_letters():
+    spoken = normalize_tts_pronunciation("Free Basic Starter Plus Pro B2B Team Enterprise")
+
+    assert spoken == "프리 베이직 스타터 플러스 프로 비투비 팀 엔터프라이즈"
+    assert "에이" not in spoken
+    assert "씨" not in spoken
+    assert "에스" not in spoken
+
+
+def test_unknown_titlecase_english_word_is_not_forced_to_spelling():
+    spoken = normalize_tts_pronunciation("Starter Growth Plan")
+
+    assert spoken == "스타터 Growth Plan"
+    assert "지 알 오 더블유 티 에이치" not in spoken
+
+
 def test_split_multilingual_tts_segments_treats_full_english_sentence_as_korean_voice():
     segments = split_multilingual_tts_segments("This service reads PDF documents naturally.")
 
