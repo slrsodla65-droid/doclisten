@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v4';
+const CACHE_NAME = 'doclisten-shell-v5';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -18,6 +18,14 @@ const SHELL_ASSETS = [
   '/scanned-pdf-limitations.html',
   '/pdf-listening-checklist.html',
   '/accessibility.html',
+  '/pdf-audio-for-reports.html',
+  '/pdf-audio-for-teachers.html',
+  '/pdf-audio-troubleshooting.html',
+  '/pdf-audio-mobile-guide.html',
+  '/pdf-audio-note-taking.html',
+  '/pdf-audio-speed-guide.html',
+  '/pdf-audio-for-low-vision.html',
+  '/pdf-audio-for-language-learning.html',
   '/editorial-policy.html',
   '/audio-reading-vs-summary.html',
   '/pdf-tts-faq.html',

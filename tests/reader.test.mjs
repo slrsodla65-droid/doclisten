@@ -253,6 +253,9 @@ test('adsense-oriented public content pages are linked and substantive', () => {
   const siteMap = readFileSync(new URL('../site-map.html', import.meta.url), 'utf8');
   const editorial = readFileSync(new URL('../editorial-policy.html', import.meta.url), 'utf8');
   const accessibility = readFileSync(new URL('../accessibility.html', import.meta.url), 'utf8');
+  const languageLearning = readFileSync(new URL('../pdf-audio-for-language-learning.html', import.meta.url), 'utf8');
+  const mobileGuide = readFileSync(new URL('../pdf-audio-mobile-guide.html', import.meta.url), 'utf8');
+  const troubleshooting = readFileSync(new URL('../pdf-audio-troubleshooting.html', import.meta.url), 'utf8');
   const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
   const sitemap = readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8');
 
@@ -275,12 +278,16 @@ test('adsense-oriented public content pages are linked and substantive', () => {
   assert.match(siteMap, /DocListen 사이트맵/);
   assert.match(editorial, /콘텐츠 편집 원칙/);
   assert.match(accessibility, /접근성 안내/);
+  assert.match(languageLearning, /외국어 PDF를 음성으로 들을 때 효과적인 방법/);
+  assert.match(mobileGuide, /모바일에서 PDF를 음성으로 듣는 방법/);
+  assert.match(troubleshooting, /PDF 음성이 안 나올 때 확인할 것/);
   assert.ok(guide.replace(/<[^>]+>/g, ' ').length > 900);
   assert.ok(blog.match(/class="article-list"/));
   assert.match(robots, /Sitemap: https:\/\/doclisten\.app\/sitemap\.xml/);
   assert.match(sitemap, /pdf-audio-app-comparison\.html/);
   assert.match(sitemap, /pdf-listening-checklist\.html/);
   assert.match(sitemap, /editorial-policy\.html/);
+  assert.match(sitemap, /pdf-audio-for-reports\.html/);
   assert.match(blog, /작성\/검토: DocListen 운영팀/);
 });
 
@@ -369,4 +376,5 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /pdf-tts-faq\.html/);
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
+  assert.match(serviceWorker, /pdf-audio-mobile-guide\.html/);
 });
