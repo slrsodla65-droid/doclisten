@@ -362,3 +362,13 @@ select {
   .player { border-radius: 20px; }
   .player-controls button, .rate-control, select { flex: 1 1 auto; justify-content: center; }
 }
+
+.article-list { display: grid; gap: 12px; margin-top: 20px; }
+.article-list a { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: rgba(15, 23, 42, 0.72); text-decoration: none; }
+.article-list a strong { color: #dbeafe; font-size: 18px; }
+.article-list a span { color: var(--muted); line-height: 1.65; }
+.article-page h2 { margin-top: 28px; }
+.article-page p { font-size: 16px; }
+
+.article-meta { color: #93c5fd; font-size: 13px; margin: -2px 0 18px; }
+.main-footer { max-width: 900px; }

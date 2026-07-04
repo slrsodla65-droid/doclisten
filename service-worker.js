@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v1';
+const CACHE_NAME = 'doclisten-shell-v4';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -10,6 +10,23 @@ const SHELL_ASSETS = [
   '/terms.html',
   '/file-policy.html',
   '/beta-launch.html',
+  '/blog.html',
+  '/pdf-tts-guide.html',
+  '/listen-to-pdf-commute.html',
+  '/research-paper-audio.html',
+  '/pdf-audio-app-comparison.html',
+  '/scanned-pdf-limitations.html',
+  '/pdf-listening-checklist.html',
+  '/accessibility.html',
+  '/editorial-policy.html',
+  '/audio-reading-vs-summary.html',
+  '/pdf-tts-faq.html',
+  '/pdf-audio-privacy.html',
+  '/ebook-pdf-audio.html',
+  '/work-document-audio.html',
+  '/study-with-pdf-audio.html',
+  '/site-map.html',
+  '/about.html',
 ];
 
 self.addEventListener('install', (event) => {

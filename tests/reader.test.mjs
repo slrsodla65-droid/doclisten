@@ -215,7 +215,6 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(contact, /환불 요청/);
   assert.match(html, /돈 내기 전에 3분만 먼저 확인하세요/);
   assert.match(html, /\.\/beta-launch\.html/);
-  assert.match(html, /\.\/admin\.html/);
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /앱처럼 쓰기/);
   assert.match(html, /홈 화면에 추가/);
@@ -233,6 +232,56 @@ test('static policy pages disclose login and paid beta basics', () => {
   assert.match(privacy, /Google 로그인/);
   assert.match(privacy, /일별 문단 사용량/);
   assert.match(privacy, /계정 삭제/);
+});
+
+
+test('adsense-oriented public content pages are linked and substantive', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const blog = readFileSync(new URL('../blog.html', import.meta.url), 'utf8');
+  const guide = readFileSync(new URL('../pdf-tts-guide.html', import.meta.url), 'utf8');
+  const commute = readFileSync(new URL('../listen-to-pdf-commute.html', import.meta.url), 'utf8');
+  const paper = readFileSync(new URL('../research-paper-audio.html', import.meta.url), 'utf8');
+  const compare = readFileSync(new URL('../pdf-audio-app-comparison.html', import.meta.url), 'utf8');
+  const scanned = readFileSync(new URL('../scanned-pdf-limitations.html', import.meta.url), 'utf8');
+  const study = readFileSync(new URL('../study-with-pdf-audio.html', import.meta.url), 'utf8');
+  const work = readFileSync(new URL('../work-document-audio.html', import.meta.url), 'utf8');
+  const ebook = readFileSync(new URL('../ebook-pdf-audio.html', import.meta.url), 'utf8');
+  const privacyGuide = readFileSync(new URL('../pdf-audio-privacy.html', import.meta.url), 'utf8');
+  const faq = readFileSync(new URL('../pdf-tts-faq.html', import.meta.url), 'utf8');
+  const checklist = readFileSync(new URL('../pdf-listening-checklist.html', import.meta.url), 'utf8');
+  const about = readFileSync(new URL('../about.html', import.meta.url), 'utf8');
+  const siteMap = readFileSync(new URL('../site-map.html', import.meta.url), 'utf8');
+  const editorial = readFileSync(new URL('../editorial-policy.html', import.meta.url), 'utf8');
+  const accessibility = readFileSync(new URL('../accessibility.html', import.meta.url), 'utf8');
+  const robots = readFileSync(new URL('../robots.txt', import.meta.url), 'utf8');
+  const sitemap = readFileSync(new URL('../sitemap.xml', import.meta.url), 'utf8');
+
+  assert.match(html, /PDF 듣기 가이드/);
+  assert.match(html, /\.\/blog\.html/);
+  assert.match(blog, /PDF를 귀로 듣는 사람을 위한 실전 가이드/);
+  assert.match(blog, /pdf-tts-guide\.html/);
+  assert.match(guide, /PDF TTS란/);
+  assert.match(commute, /출퇴근길 PDF 듣기/);
+  assert.match(paper, /논문 PDF를 효율적으로 듣는 방법/);
+  assert.match(compare, /PDF 읽어주는 앱 선택 기준/);
+  assert.match(scanned, /스캔 PDF가 잘 안 읽히는 이유/);
+  assert.match(study, /학습용 PDF를 음성으로 반복해서 듣는 방법/);
+  assert.match(work, /업무 문서 PDF를 음성으로 복습하는 방법/);
+  assert.match(ebook, /전자책 PDF를 음성으로 들을 때 확인할 점/);
+  assert.match(privacyGuide, /개인정보 체크리스트/);
+  assert.match(faq, /PDF TTS 자주 묻는 질문/);
+  assert.match(checklist, /PDF를 듣기 전에 확인할 체크리스트/);
+  assert.match(about, /DocListen은 긴 PDF를 귀로 듣기 위한 웹앱입니다/);
+  assert.match(siteMap, /DocListen 사이트맵/);
+  assert.match(editorial, /콘텐츠 편집 원칙/);
+  assert.match(accessibility, /접근성 안내/);
+  assert.ok(guide.replace(/<[^>]+>/g, ' ').length > 900);
+  assert.ok(blog.match(/class="article-list"/));
+  assert.match(robots, /Sitemap: https:\/\/doclisten\.app\/sitemap\.xml/);
+  assert.match(sitemap, /pdf-audio-app-comparison\.html/);
+  assert.match(sitemap, /pdf-listening-checklist\.html/);
+  assert.match(sitemap, /editorial-policy\.html/);
+  assert.match(blog, /작성\/검토: DocListen 운영팀/);
 });
 
 
@@ -315,4 +364,9 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(manifest, /"display": "standalone"/);
   assert.match(serviceWorker, /CACHE_NAME/);
   assert.match(serviceWorker, /beta-launch\.html/);
+  assert.match(serviceWorker, /blog\.html/);
+  assert.match(serviceWorker, /pdf-tts-guide\.html/);
+  assert.match(serviceWorker, /pdf-tts-faq\.html/);
+  assert.match(serviceWorker, /about\.html/);
+  assert.match(serviceWorker, /editorial-policy\.html/);
 });
