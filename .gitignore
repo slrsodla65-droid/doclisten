@@ -8,6 +8,10 @@ dist/
 build/
 .DS_Store
 android/local.properties
+android/keystore.properties
+android/keystores/
+*.jks
+*.keystore
 android/.gradle/
 android/app/build/
 ios/App/Pods/
