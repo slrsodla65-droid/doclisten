@@ -355,6 +355,26 @@ test('only Google social login button is present with clear account controls', (
 });
 
 
+test('mobile app shell is configured and hides external purchase CTAs in native mode', () => {
+  const pkg = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
+  const config = readFileSync(new URL('../capacitor.config.ts', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+  const styles = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  const reviewNotes = readFileSync(new URL('../docs/app-store/review-notes-ko.md', import.meta.url), 'utf8');
+
+  assert.match(pkg, /"@capacitor\/ios"/);
+  assert.match(pkg, /"@capacitor\/android"/);
+  assert.match(config, /appId: 'app\.doclisten\.mobile'/);
+  assert.match(config, /url: 'https:\/\/doclisten\.app'/);
+  assert.match(app, /isNativeContainer/);
+  assert.match(app, /applyNativeAppMode/);
+  assert.match(app, /if \(state\.isNativeApp\) return/);
+  assert.match(styles, /html\.native-app \[data-payment-cta\]/);
+  assert.match(styles, /html\.native-app \.pricing-grid/);
+  assert.match(reviewNotes, /In-App Purchase\(IAP\)/);
+});
+
+
 test('admin dashboard and PWA assets are present for launch operations', () => {
   const admin = readFileSync(new URL('../admin.html', import.meta.url), 'utf8');
   const adminScript = readFileSync(new URL('../src/admin.mjs', import.meta.url), 'utf8');

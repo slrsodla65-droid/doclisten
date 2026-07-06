@@ -165,6 +165,15 @@ h1 { margin: 0; font-size: clamp(22px, 5vw, 36px); }
 .empty-card p, .empty-card li { color: var(--muted); line-height: 1.65; }
 
 .hidden { display: none !important; }
+html.native-app [data-payment-cta],
+html.native-app .monetization-hero,
+html.native-app .pricing-grid,
+html.native-app .account-row,
+html.native-app a[href="#pricing"] {
+  display: none !important;
+}
+html.native-app body { padding-top: env(safe-area-inset-top); }
+html.native-app .app-shell { padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right)); }
 .reader-toolbar {
   display: flex;
   justify-content: center;

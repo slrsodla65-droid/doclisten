@@ -6,6 +6,24 @@
   "scripts": {
     "test": "node --test tests/*.test.mjs",
     "start": "python3 server.py",
-    "verify": "npm test"
+    "verify": "npm test && python3 -m py_compile server.py",
+    "mobile:sync": "cap sync",
+    "mobile:copy": "cap copy",
+    "mobile:open:ios": "cap open ios",
+    "mobile:open:android": "cap open android",
+    "mobile:doctor": "cap doctor"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
+    "typescript": "^6.0.3"
+  },
+  "description": "DocListen PDF audio reader web and mobile app",
+  "capacitor": {
+    "appId": "app.doclisten.mobile",
+    "appName": "DocListen",
+    "webDir": "mobile-shell"
   }
 }

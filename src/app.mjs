@@ -47,6 +47,10 @@ const els = {
   installGuide: document.querySelector('#installGuide'),
 };
 
+function isNativeContainer() {
+  return Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.getPlatform?.() === 'ios' || window.Capacitor?.getPlatform?.() === 'android');
+}
+
 const state = {
   pdf: null,
   fileName: '',
@@ -68,11 +72,30 @@ const state = {
   currentAudio: null,
   currentAudioUrl: '',
   nextNarration: null,
+  isNativeApp: isNativeContainer(),
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
 
-
+function applyNativeAppMode() {
+  if (!state.isNativeApp) return;
+  document.documentElement.classList.add('native-app');
+  els.paymentLinks.forEach((node) => {
+    node.setAttribute('aria-hidden', 'true');
+    node.tabIndex = -1;
+  });
+  if (els.accountMessage) {
+    els.accountMessage.textContent = '앱에서는 무료 체험과 PDF 듣기 기능을 먼저 제공합니다. 결제 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+  }
+  const installPanelText = document.querySelector('.install-panel p');
+  if (installPanelText) {
+    installPanelText.textContent = '현재 실행 중인 앱에서 PDF를 업로드하고 문단별로 들을 수 있습니다.';
+  }
+  const paywallText = els.paywallNotice?.querySelector('p');
+  if (paywallText) {
+    paywallText.textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+  }
+}
 
 async function loadPaymentConfig() {
   try {
@@ -85,6 +108,7 @@ async function loadPaymentConfig() {
       });
     }
     state.socialLoginProviders = config.socialLoginProviders || [];
+    if (state.isNativeApp) return;
     if (config.paymentUrl) {
       els.paymentLinks.forEach((node) => {
         node.href = config.paymentUrl;
@@ -287,6 +311,9 @@ function updateUsageUi() {
     }
   }
   els.paywallNotice?.classList.toggle('hidden', !usage.reached || usage.plan !== 'free');
+  if (state.isNativeApp && usage.reached && els.paywallNotice) {
+    els.paywallNotice.querySelector('p').textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+  }
 }
 
 async function consumeListeningCredit() {
@@ -304,7 +331,9 @@ async function consumeListeningCredit() {
     const payload = await response.json();
     applyServerStatus(payload);
     if (!payload.allowed) {
-      els.currentText.textContent = '오늘 무료 듣기 한도를 모두 사용했습니다. 카카오톡 베타 신청 후 코드를 입력하면 제한이 해제됩니다.';
+      els.currentText.textContent = state.isNativeApp
+        ? '오늘 무료 듣기 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.'
+        : '오늘 무료 듣기 한도를 모두 사용했습니다. 카카오톡 베타 신청 후 코드를 입력하면 제한이 해제됩니다.';
       els.paywallNotice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
@@ -863,6 +892,7 @@ window.addEventListener('beforeunload', () => {
   window.speechSynthesis?.cancel();
 });
 
+applyNativeAppMode();
 trackBetaEvent('page_view');
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').catch((error) => console.debug('Service worker registration failed', error));
