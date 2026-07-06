@@ -736,6 +736,7 @@ async function playServerNarration(block, runId) {
 
   audio.onplay = () => {
     if (runId !== state.speechRunId) return;
+    els.currentText.textContent = block.text;
     state.speaking = true;
     state.paused = false;
     updateControls();
