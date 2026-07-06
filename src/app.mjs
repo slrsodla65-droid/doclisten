@@ -85,7 +85,7 @@ function applyNativeAppMode() {
     node.tabIndex = -1;
   });
   if (els.accountMessage) {
-    els.accountMessage.textContent = '앱에서는 무료 체험과 PDF 듣기 기능을 먼저 제공합니다. 결제 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    els.accountMessage.textContent = '앱에서는 로그인 없이 PDF 업로드와 문단별 듣기 기능을 먼저 제공합니다. 결제 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
   }
   const installPanelText = document.querySelector('.install-panel p');
   if (installPanelText) {
@@ -93,7 +93,7 @@ function applyNativeAppMode() {
   }
   const paywallText = els.paywallNotice?.querySelector('p');
   if (paywallText) {
-    paywallText.textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    paywallText.textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
   }
 }
 
@@ -300,7 +300,9 @@ function updateUsageUi() {
   const usage = state.serverUsage || createDailyUsageSnapshot(state.freeListensUsed, FREE_DAILY_LISTEN_LIMIT);
   if (els.planLabel) els.planLabel.textContent = usage.plan === 'free' ? 'Free 체험' : planDisplayLabel(usage.plan);
   if (els.usageLabel) {
-    if (!state.token) {
+    if (state.isNativeApp && !state.token) {
+      els.usageLabel.textContent = '앱에서는 로그인 없이 PDF를 업로드하고 바로 들을 수 있습니다.';
+    } else if (!state.token) {
       els.usageLabel.textContent = `Google 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
     } else if (usage.plan === 'free') {
       els.usageLabel.textContent = `서버 저장 사용량: 오늘 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`;
@@ -312,12 +314,16 @@ function updateUsageUi() {
   }
   els.paywallNotice?.classList.toggle('hidden', !usage.reached || usage.plan !== 'free');
   if (state.isNativeApp && usage.reached && els.paywallNotice) {
-    els.paywallNotice.querySelector('p').textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    els.paywallNotice.querySelector('p').textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
   }
 }
 
 async function consumeListeningCredit() {
   trackBetaEvent('listen_attempt');
+  if (state.isNativeApp && !state.token) {
+    setAccountMessage('앱에서는 로그인 없이 PDF 문단 듣기를 사용할 수 있습니다.');
+    return true;
+  }
   if (!state.token) {
     setAccountMessage('무료 사용량 관리를 위해 먼저 Google 로그인을 해주세요.');
     return false;
@@ -332,7 +338,7 @@ async function consumeListeningCredit() {
     applyServerStatus(payload);
     if (!payload.allowed) {
       els.currentText.textContent = state.isNativeApp
-        ? '오늘 무료 듣기 한도를 모두 사용했습니다. 앱 내 유료 기능은 App Store 정책에 맞춰 별도 업데이트 예정입니다.'
+        ? '오늘 무료 듣기 한도를 모두 사용했습니다. 앱 내 유료 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.'
         : '오늘 무료 듣기 한도를 모두 사용했습니다. 카카오톡 베타 신청 후 코드를 입력하면 제한이 해제됩니다.';
       els.paywallNotice?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;

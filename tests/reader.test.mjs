@@ -369,6 +369,8 @@ test('mobile app shell is configured and hides external purchase CTAs in native 
   assert.match(app, /isNativeContainer/);
   assert.match(app, /applyNativeAppMode/);
   assert.match(app, /if \(state\.isNativeApp\) return/);
+  assert.match(app, /앱에서는 로그인 없이 PDF 문단 듣기를 사용할 수 있습니다/);
+  assert.match(app, /if \(state\.isNativeApp && !state\.token\) \{/);
   assert.match(styles, /html\.native-app \[data-payment-cta\]/);
   assert.match(styles, /html\.native-app \.pricing-grid/);
   assert.match(reviewNotes, /In-App Purchase\(IAP\)/);
