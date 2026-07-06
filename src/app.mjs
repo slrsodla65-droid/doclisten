@@ -712,6 +712,14 @@ function fallbackToBrowserSpeech(block, runId) {
     updateControls();
   };
 
+  if (!window.speechSynthesis?.speak) {
+    els.currentText.textContent = `${block.text} · 이 기기에서는 기본 음성 엔진을 바로 사용할 수 없습니다. 네트워크 음성으로 다시 시도해주세요.`;
+    state.speaking = false;
+    state.paused = false;
+    updateControls();
+    return;
+  }
+
   window.speechSynthesis.speak(utterance);
 }
 
@@ -751,7 +759,7 @@ async function speakBlock(block) {
   const runId = state.speechRunId;
   state.speaking = true;
   state.paused = false;
-  window.speechSynthesis.cancel();
+  window.speechSynthesis?.cancel();
   releaseCurrentAudio();
   setActiveBlock(block, { autoScroll: true });
   els.currentText.textContent = `${block.text} · 오디오북 음성을 준비하는 중입니다...`;
