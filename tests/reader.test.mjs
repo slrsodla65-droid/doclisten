@@ -195,43 +195,28 @@ test('server audiobook mode declares production dependencies and fallback-safe p
 });
 
 
-test('static policy pages disclose login and paid beta basics', () => {
+test('static policy pages disclose free access, rights, and deletion controls', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
   const privacy = readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
   const terms = readFileSync(new URL('../terms.html', import.meta.url), 'utf8');
-  const launch = readFileSync(new URL('../beta-launch.html', import.meta.url), 'utf8');
 
-  assert.match(contact, /https:\/\/open\.kakao\.com\/o\/sKDe1RBi/);
-  assert.match(contact, /월 4,900원/);
-  assert.match(contact, /베타 코드/);
-  assert.match(contact, /카카오톡 베타 신청 순서/);
-  assert.match(contact, /신청 양식 복사/);
-  assert.match(contact, /무료 체험 확인/);
-  assert.match(contact, /텍스트 선택이 가능한 PDF/);
-  assert.match(contact, /입금자명/);
-  assert.match(contact, /Google 로그인 이메일/);
-  assert.match(contact, /결제 확인일로부터 30일/);
-  assert.match(contact, /환불 요청/);
-  assert.match(html, /돈 내기 전에 3분만 먼저 확인하세요/);
-  assert.match(html, /\.\/beta-launch\.html/);
+  assert.match(contact, /저작권·상표권·개인정보 침해 신고/);
+  assert.match(contact, /파일 또는 음성 캐시 삭제 요청/);
+  assert.match(contact, /결제나 계좌이체를 요구하지 않습니다/);
+  assert.match(html, /3단계로 안전하게 시작하세요/);
+  assert.doesNotMatch(html, /\.\/beta-launch\.html/);
   assert.match(html, /rel="manifest" href="\.\/manifest\.webmanifest"/);
   assert.match(html, /앱처럼 쓰기/);
   assert.match(html, /홈 화면에 추가/);
-  assert.match(launch, /짧은 공유 문구/);
-  assert.match(launch, /커뮤니티\/지인용 문구/);
-  assert.match(launch, /카카오톡 응대 문구/);
-  assert.match(launch, /https:\/\/doclisten\.app\//);
   assert.match(html, /지원 권장 PDF/);
-  assert.match(html, /결제 전 품질 확인/);
-  assert.match(html, /결제 확인일로부터 30일/);
-  assert.match(terms, /유료 베타 이용기간/);
-  assert.match(terms, /결제 확인일로부터 30일/);
-  assert.match(terms, /환불/);
-  assert.match(terms, /베타 서비스/);
+  assert.match(html, /무료 품질 확인/);
+  assert.match(terms, /현재 공개 웹 서비스/);
+  assert.match(terms, /비공식 결제를 요구하지 않습니다/);
   assert.match(privacy, /Google 로그인/);
   assert.match(privacy, /일별 문단 사용량/);
   assert.match(privacy, /계정 삭제/);
+  assert.match(privacy, /Google 광고 설정/);
 });
 
 
@@ -288,29 +273,23 @@ test('adsense-oriented public content pages are linked and substantive', () => {
   assert.match(sitemap, /pdf-listening-checklist\.html/);
   assert.match(sitemap, /editorial-policy\.html/);
   assert.match(sitemap, /pdf-audio-for-reports\.html/);
+  assert.match(sitemap, /acceptable-use\.html/);
+  assert.doesNotMatch(sitemap, /beta-launch\.html/);
   assert.match(blog, /작성\/검토: DocListen 운영팀/);
 });
 
 
-test('payment CTAs can be converted to payment links from server config', () => {
+test('public app avoids unofficial payment funnels and ads beside uploaded documents', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+  const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
+  const terms = readFileSync(new URL('../terms.html', import.meta.url), 'utf8');
 
-  assert.match(html, /data-payment-cta/);
-  assert.match(html, /data-beta-price-label/);
-  assert.match(app, /fetch\('\/api\/config'/);
-  assert.match(app, /fetch\('\/api\/event'/);
-  assert.match(app, /trackBetaEvent\('page_view'\)/);
-  assert.match(app, /trackBetaEvent\('pdf_upload'\)/);
-  assert.match(app, /trackBetaEvent\('listen_attempt'\)/);
-  assert.match(app, /trackBetaEvent\('beta_cta_click'\)/);
-  assert.match(app, /trackBetaEvent\('login_click'\)/);
-  assert.match(app, /카카오톡으로 베타 신청/);
-  assert.match(app, /이미 다른 계정에서 사용된 베타 코드/);
-  assert.match(app, /베타 코드를 확인하는 중입니다/);
-  assert.match(app, /베타 코드 확인에 실패했습니다/);
-  assert.match(app, /30 \* 1024 \* 1024/);
-  assert.match(app, /30MB 이하의 텍스트형 PDF/);
+  assert.doesNotMatch(html, /data-payment-cta/);
+  assert.doesNotMatch(html, /pagead2\.googlesyndication\.com/);
+  assert.match(html, /name="google-adsense-account" content="ca-pub-1136619051034273"/);
+  assert.doesNotMatch(contact, /pagead2\.googlesyndication\.com/);
+  assert.doesNotMatch(terms, /pagead2\.googlesyndication\.com/);
+  assert.match(contact, /현재 공개된 무료 사용 범위/);
 });
 
 

@@ -85,7 +85,7 @@ function applyNativeAppMode() {
     node.tabIndex = -1;
   });
   if (els.accountMessage) {
-    els.accountMessage.textContent = '앱에서는 로그인 없이 PDF 업로드와 문단별 듣기 기능을 먼저 제공합니다. 결제 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    els.accountMessage.textContent = '앱에서는 로그인 없이 PDF 업로드와 문단별 듣기 기능을 제공합니다.';
   }
   const installPanelText = document.querySelector('.install-panel p');
   if (installPanelText) {
@@ -93,7 +93,7 @@ function applyNativeAppMode() {
   }
   const paywallText = els.paywallNotice?.querySelector('p');
   if (paywallText) {
-    paywallText.textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    paywallText.textContent = '오늘 무료 사용량을 모두 사용했습니다. 사용량은 다음 날 자동으로 초기화됩니다.';
   }
 }
 
@@ -114,7 +114,7 @@ async function loadPaymentConfig() {
         node.href = config.paymentUrl;
         node.target = '_blank';
         node.rel = 'noopener noreferrer';
-        node.textContent = config.paymentProvider === 'kakao-openchat' ? '카카오톡으로 베타 신청' : '유료 베타 결제하기';
+        node.textContent = '서비스 문의';
       });
     }
   } catch (error) {
@@ -151,7 +151,7 @@ function setAccountMessage(message) {
 
 function planDisplayLabel(plan) {
   if (plan === 'admin') return 'Admin';
-  if (plan === 'beta-pro') return 'Beta Pro';
+  if (plan === 'beta-pro') return 'Pro';
   return 'Free';
 }
 
@@ -287,7 +287,7 @@ async function activateBetaCode() {
       return;
     }
     applyServerStatus(payload);
-    setAccountMessage('Beta Pro 활성화 완료. 오늘 한도 없이 사용할 수 있습니다.');
+    setAccountMessage('Pro 권한이 활성화되었습니다. 오늘 한도 없이 사용할 수 있습니다.');
   } catch (error) {
     console.debug('Beta activation unavailable', error);
     setAccountMessage('베타 코드 확인에 실패했습니다. 네트워크 상태를 확인한 뒤 다시 시도해주세요.');
@@ -309,12 +309,12 @@ function updateUsageUi() {
     } else if (usage.plan === 'admin') {
       els.usageLabel.textContent = 'Admin 활성화됨 · 운영자는 하루 제한 없이 사용할 수 있습니다.';
     } else {
-      els.usageLabel.textContent = 'Beta Pro 활성화됨 · 하루 제한 없이 사용할 수 있습니다.';
+      els.usageLabel.textContent = 'Pro 활성화됨 · 하루 제한 없이 사용할 수 있습니다.';
     }
   }
   els.paywallNotice?.classList.toggle('hidden', !usage.reached || usage.plan !== 'free');
   if (state.isNativeApp && usage.reached && els.paywallNotice) {
-    els.paywallNotice.querySelector('p').textContent = '오늘 무료 체험 한도를 모두 사용했습니다. 앱 내 유료 기능은 Play Store 정책에 맞춰 별도 업데이트 예정입니다.';
+    els.paywallNotice.querySelector('p').textContent = '오늘 무료 사용량을 모두 사용했습니다. 사용량은 다음 날 자동으로 초기화됩니다.';
   }
 }
 
