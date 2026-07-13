@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v5';
+const CACHE_NAME = 'doclisten-shell-v6';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/assets/icon.svg',
   '/contact.html',
+  '/delete-account.html',
   '/privacy.html',
   '/terms.html',
   '/file-policy.html',

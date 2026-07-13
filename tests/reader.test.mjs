@@ -199,6 +199,7 @@ test('static policy pages disclose free access, rights, and deletion controls', 
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const contact = readFileSync(new URL('../contact.html', import.meta.url), 'utf8');
   const privacy = readFileSync(new URL('../privacy.html', import.meta.url), 'utf8');
+  const deletion = readFileSync(new URL('../delete-account.html', import.meta.url), 'utf8');
   const terms = readFileSync(new URL('../terms.html', import.meta.url), 'utf8');
 
   assert.match(contact, /저작권·상표권·개인정보 침해 신고/);
@@ -217,6 +218,11 @@ test('static policy pages disclose free access, rights, and deletion controls', 
   assert.match(privacy, /일별 문단 사용량/);
   assert.match(privacy, /계정 삭제/);
   assert.match(privacy, /Google 광고 설정/);
+  assert.match(privacy, /delete-account\.html/);
+  assert.match(deletion, /DocListen 계정 및 데이터 삭제/);
+  assert.match(deletion, /계정 삭제 요청/);
+  assert.match(deletion, /영업일 기준 7일 이내/);
+  assert.match(deletion, /최대 90일/);
 });
 
 
@@ -274,6 +280,7 @@ test('adsense-oriented public content pages are linked and substantive', () => {
   assert.match(sitemap, /editorial-policy\.html/);
   assert.match(sitemap, /pdf-audio-for-reports\.html/);
   assert.match(sitemap, /acceptable-use\.html/);
+  assert.match(sitemap, /delete-account\.html/);
   assert.doesNotMatch(sitemap, /beta-launch\.html/);
   assert.match(blog, /작성\/검토: DocListen 운영팀/);
 });
@@ -380,4 +387,5 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.match(serviceWorker, /pdf-audio-mobile-guide\.html/);
+  assert.match(serviceWorker, /delete-account\.html/);
 });
