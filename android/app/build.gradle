@@ -11,7 +11,7 @@ android {
     namespace = "app.doclisten.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.doclisten.mobile"
+        applicationId "com.voxly.studio"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
