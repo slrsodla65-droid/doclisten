@@ -18,9 +18,38 @@ import {
   canStartListeningForPlan,
   shouldRequireLoginBeforeUpload,
   shouldResumeCurrentPlayback,
+  getPdfViewportScale,
+  getPdfRenderMetrics,
   prepareSpokenText,
   selectInitialListeningBlock,
 } from '../src/readerCore.mjs';
+
+test('PDF canvas uses high-DPI backing pixels without unbounded memory growth', () => {
+  assert.deepEqual(getPdfRenderMetrics({ width: 360, height: 480 }, 2.75), {
+    outputScale: 2.75,
+    pixelWidth: 990,
+    pixelHeight: 1320,
+    transform: [2.75, 0, 0, 2.75, 0, 0],
+  });
+  assert.deepEqual(getPdfRenderMetrics({ width: 360, height: 480 }, 4), {
+    outputScale: 3,
+    pixelWidth: 1080,
+    pixelHeight: 1440,
+    transform: [3, 0, 0, 3, 0, 0],
+  });
+  assert.deepEqual(getPdfRenderMetrics({ width: 360.8, height: 480.9 }, 0.5), {
+    outputScale: 1,
+    pixelWidth: 360,
+    pixelHeight: 480,
+    transform: null,
+  });
+});
+
+test('PDF viewport fits the full page width inside mobile and desktop screens', () => {
+  assert.equal(getPdfViewportScale(600, 390), 366 / 600);
+  assert.equal(getPdfViewportScale(600, 1200), 920 / 600);
+  assert.equal(getPdfViewportScale(0, 390), 1);
+});
 
 test('buildBlocksFromTextItems groups nearby text items into ordered line blocks', () => {
   const viewport = { width: 600, height: 800 };

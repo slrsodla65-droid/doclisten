@@ -9,9 +9,11 @@ import {
   canStartListeningForPlan,
   shouldRequireLoginBeforeUpload,
   shouldResumeCurrentPlayback,
+  getPdfViewportScale,
+  getPdfRenderMetrics,
   prepareSpokenText,
   selectInitialListeningBlock,
-} from './readerCore.mjs?v=36';
+} from './readerCore.mjs?v=38';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -597,19 +599,19 @@ async function renderPage(pageNumber, preferredBlockId = null) {
   if (token !== state.renderToken) return;
 
   const rawViewport = page.getViewport({ scale: 1 });
-  const availableWidth = Math.min(window.innerWidth - 24, 920);
-  const scale = Math.max(0.7, availableWidth / rawViewport.width);
+  const scale = getPdfViewportScale(rawViewport.width, window.innerWidth);
   const viewport = page.getViewport({ scale });
+  const renderMetrics = getPdfRenderMetrics(viewport, window.devicePixelRatio);
 
-  els.pdfCanvas.width = Math.floor(viewport.width);
-  els.pdfCanvas.height = Math.floor(viewport.height);
+  els.pdfCanvas.width = renderMetrics.pixelWidth;
+  els.pdfCanvas.height = renderMetrics.pixelHeight;
   els.pdfCanvas.style.width = `${viewport.width}px`;
   els.pdfCanvas.style.height = `${viewport.height}px`;
   els.textOverlay.style.width = `${viewport.width}px`;
   els.textOverlay.style.height = `${viewport.height}px`;
   els.textOverlay.innerHTML = '';
 
-  await page.render({ canvasContext, viewport }).promise;
+  await page.render({ canvasContext, viewport, transform: renderMetrics.transform }).promise;
   const textContent = await page.getTextContent();
   const blocks = buildBlocks(textContent.items, viewport, state.currentPage);
   state.pages.set(state.currentPage, blocks);

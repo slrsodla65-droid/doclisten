@@ -38,6 +38,32 @@ export function shouldResumeCurrentPlayback({ speaking = false, paused = false }
   return Boolean(speaking) && Boolean(paused);
 }
 
+export function getPdfViewportScale(rawPageWidth = 0, windowWidth = 0, maxDisplayWidth = 920, horizontalPadding = 24) {
+  const safePageWidth = Number(rawPageWidth);
+  if (!Number.isFinite(safePageWidth) || safePageWidth <= 0) return 1;
+  const safeWindowWidth = Math.max(1, Number(windowWidth) || 1);
+  const safeMaxWidth = Math.max(1, Number(maxDisplayWidth) || 920);
+  const safePadding = Math.max(0, Number(horizontalPadding) || 0);
+  const availableWidth = Math.max(1, Math.min(safeWindowWidth - safePadding, safeMaxWidth));
+  return availableWidth / safePageWidth;
+}
+
+export function getPdfRenderMetrics(viewport = {}, devicePixelRatio = 1, maxOutputScale = 3) {
+  const width = Math.max(0, Number(viewport.width) || 0);
+  const height = Math.max(0, Number(viewport.height) || 0);
+  const rawRatio = Number(devicePixelRatio);
+  const rawMaxScale = Number(maxOutputScale);
+  const safeRatio = Number.isFinite(rawRatio) ? rawRatio : 1;
+  const safeMaxScale = Number.isFinite(rawMaxScale) ? Math.max(1, rawMaxScale) : 3;
+  const outputScale = Math.min(Math.max(1, safeRatio), safeMaxScale);
+  return {
+    outputScale,
+    pixelWidth: Math.floor(width * outputScale),
+    pixelHeight: Math.floor(height * outputScale),
+    transform: outputScale === 1 ? null : [outputScale, 0, 0, outputScale, 0, 0],
+  };
+}
+
 
 export function shouldKeepScreenAwake({ speaking, paused } = {}) {
   return Boolean(speaking) && !Boolean(paused);
