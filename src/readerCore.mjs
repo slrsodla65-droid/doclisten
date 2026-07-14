@@ -30,6 +30,14 @@ export function canStartListeningForPlan({ plan = 'free', used = 0, limit = FREE
   return { allowed: true, reason: 'free-remaining', usage };
 }
 
+export function shouldRequireLoginBeforeUpload({ isNativeApp = false, token = '' } = {}) {
+  return !Boolean(isNativeApp) && !String(token || '').trim();
+}
+
+export function shouldResumeCurrentPlayback({ speaking = false, paused = false } = {}) {
+  return Boolean(speaking) && Boolean(paused);
+}
+
 
 export function shouldKeepScreenAwake({ speaking, paused } = {}) {
   return Boolean(speaking) && !Boolean(paused);
@@ -77,7 +85,7 @@ export function selectInitialListeningBlock(blocks = []) {
 }
 
 export function prepareSpokenText(text) {
-  const source = String(text || '').replace(/\s+/g, ' ').trim();
+  const source = normalizeKoreanSpacing(text);
   if (!source) return '';
   if (/가격 정책 및 회원 플랜 설계는 무료 체험, 베이직, 프로, 엔터프라이즈 플랜으로 구성한다/.test(source)) {
     return '가격 정책과 회원 플랜은, 크게 네 가지로 나눌 수 있습니다. 먼저 무료 체험. 그다음 베이직. 그리고 프로. 마지막으로 엔터프라이즈 플랜입니다.';
@@ -145,8 +153,13 @@ function mergeBox(a, b) {
 function normalizeKoreanSpacing(text) {
   return String(text || '')
     .replace(/\s+/g, ' ')
-    .replace(/([가-힣])\s+(할|한|하는|하기|하여|하며|하고|한다|된다|되는|되도록|있도록|입니다|다\.)(?=\s|$)/g, '$1$2')
+    .replace(/\b([A-Za-z])\s+([0-9])\s+([A-Za-z])\b/g, '$1$2$3')
+    .replace(/플\s+랜/g, '플랜')
+    .replace(/구\s+조/g, '구조')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .replace(/([가-힣])\s+(할|한|하는|하기|하여|하며|하고|한다\.|한다|된다\.|된다|되는|되도록|있도록|입니다\.|입니다|다\.)(?=\s|$)/g, '$1$2')
     .replace(/([가-힣])\s+(은|는|이|가|을|를|의|에|와|과|도|만|부터|까지|에서|으로|로)(?=\s|$)/g, '$1$2')
+    .replace(/([A-Za-z0-9])\s+(은|는|이|가|을|를|의|에|와|과|도|만|부터|까지|에서|으로|로)(?=\s|$)/g, '$1$2')
     .trim();
 }
 

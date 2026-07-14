@@ -355,7 +355,7 @@ select {
 }
 
 @media (max-width: 640px) {
-  body { padding-bottom: 230px; }
+  body { padding-bottom: 178px; }
   .topbar { align-items: flex-start; flex-direction: column; }
   .top-actions { width: 100%; justify-content: flex-start; }
   .compact-nav { order: 2; }
@@ -368,8 +368,38 @@ select {
   .app-shell { padding: 12px; }
   .empty-card { padding: 20px; border-radius: 22px; }
   .reader-toolbar { gap: 8px; }
-  .player { border-radius: 20px; }
-  .player-controls button, .rate-control, select { flex: 1 1 auto; justify-content: center; }
+  .player {
+    bottom: max(6px, env(safe-area-inset-bottom));
+    width: calc(100% - 10px);
+    padding: 10px;
+    border-radius: 16px;
+  }
+  .now-reading strong {
+    margin-bottom: 3px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .now-reading p {
+    margin-bottom: 8px;
+    max-height: 2.8em;
+    font-size: 13px;
+  }
+  .player-controls {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .player-controls button, .rate-control {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 6px;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .rate-control { grid-column: span 2; }
+  .rate-control select { min-width: 0; padding: 7px 8px; }
 }
 
 .article-list { display: grid; gap: 12px; margin-top: 20px; }

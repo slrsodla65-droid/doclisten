@@ -7,9 +7,11 @@ import {
   getDailyUsageKey,
   createDailyUsageSnapshot,
   canStartListeningForPlan,
+  shouldRequireLoginBeforeUpload,
+  shouldResumeCurrentPlayback,
   prepareSpokenText,
   selectInitialListeningBlock,
-} from './readerCore.mjs?v=35';
+} from './readerCore.mjs?v=36';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -86,6 +88,15 @@ function applyNativeAppMode() {
   });
   if (els.accountMessage) {
     els.accountMessage.textContent = '앱에서는 로그인 없이 PDF 업로드와 문단별 듣기 기능을 제공합니다.';
+  }
+  document.querySelector('section[aria-label="회원 로그인"]')?.classList.add('hidden');
+  const firstEmptyStateStep = document.querySelector('#emptyState li');
+  if (firstEmptyStateStep) {
+    firstEmptyStateStep.textContent = 'PDF 업로드 → 무료 문단 듣기';
+  }
+  const firstQuickStartText = document.querySelector('#guide .guide-grid article:first-child p');
+  if (firstQuickStartText) {
+    firstQuickStartText.textContent = '실제로 듣고 싶은 PDF를 올려 문단별 음성과 화면 표시를 바로 테스트합니다.';
   }
   const installPanelText = document.querySelector('.install-panel p');
   if (installPanelText) {
@@ -397,6 +408,18 @@ function stopSpeech() {
   updateControls();
 }
 
+function resumeCurrentPlayback() {
+  if (!shouldResumeCurrentPlayback(state)) return false;
+  if (state.currentAudio) {
+    void state.currentAudio.play();
+  } else {
+    window.speechSynthesis?.resume();
+  }
+  state.paused = false;
+  updateControls();
+  return true;
+}
+
 async function syncWakeLock() {
   const shouldHold = shouldKeepScreenAwake({ speaking: state.speaking, paused: state.paused });
   if (!shouldHold) {
@@ -429,7 +452,8 @@ function updateControls() {
   const hasPdf = Boolean(state.pdf);
   els.prevPageBtn.disabled = !hasPdf || state.currentPage <= 1;
   els.nextPageBtn.disabled = !hasPdf || state.currentPage >= state.pdf.numPages;
-  els.listenBtn.disabled = !hasPdf;
+  els.listenBtn.disabled = !hasPdf || (state.speaking && !state.paused);
+  els.listenBtn.textContent = state.paused ? '이어듣기' : '듣기';
   els.pauseBtn.disabled = !state.speaking;
   els.prevBlockBtn.disabled = !state.activeBlock;
   els.nextBlockBtn.disabled = !state.activeBlock;
@@ -464,8 +488,13 @@ function unionBox(a, b) {
 function normalizeKoreanSpacing(text) {
   return String(text || '')
     .replace(/\s+/g, ' ')
-    .replace(/([가-힣])\s+(할|한|하는|하기|하여|하며|하고|한다|한다\.|된다|된다\.|되는|되도록|있도록|입니다|입니다\.|다\.)(?=\s|$)/g, '$1$2')
+    .replace(/\b([A-Za-z])\s+([0-9])\s+([A-Za-z])\b/g, '$1$2$3')
+    .replace(/플\s+랜/g, '플랜')
+    .replace(/구\s+조/g, '구조')
+    .replace(/\s+([.,!?;:])/g, '$1')
+    .replace(/([가-힣])\s+(할|한|하는|하기|하여|하며|하고|한다\.|한다|된다\.|된다|되는|되도록|있도록|입니다\.|입니다|다\.)(?=\s|$)/g, '$1$2')
     .replace(/([가-힣])\s+(은|는|이|가|을|를|의|에|와|과|도|만|부터|까지|에서|으로|로)(?=\s|$)/g, '$1$2')
+    .replace(/([A-Za-z0-9])\s+(은|는|이|가|을|를|의|에|와|과|도|만|부터|까지|에서|으로|로)(?=\s|$)/g, '$1$2')
     .trim();
 }
 
@@ -646,7 +675,7 @@ async function fetchServerNarration(block) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      text: block.text,
+      text: prepareSpokenText(block.text),
       voice: 'gtts-ko-human',
       rate: rateForServerTts(),
     }),
@@ -801,6 +830,12 @@ async function loadPdf(file) {
 }
 
 els.uploadBtn.addEventListener('click', () => {
+  if (shouldRequireLoginBeforeUpload({ isNativeApp: state.isNativeApp, token: state.token })) {
+    setAccountMessage('PDF 업로드 전에 먼저 Google로 로그인해주세요. 로그인 후에는 선택한 파일이 초기화되지 않습니다.');
+    document.querySelector('a.social-login.google')?.focus();
+    els.accountStatus?.closest('.account-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   els.fileInput.value = '';
   els.fileInput.click();
 });
@@ -817,6 +852,7 @@ els.fileInput.addEventListener('change', async (event) => {
 });
 
 els.listenBtn.addEventListener('click', () => {
+  if (resumeCurrentPlayback()) return;
   const block = state.activeBlock || (state.pages.get(state.currentPage) || [])[0];
   speakBlock(block);
 });
@@ -824,20 +860,15 @@ els.listenBtn.addEventListener('click', () => {
 els.pauseBtn.addEventListener('click', () => {
   if (!state.speaking) return;
   if (state.paused) {
-    if (state.currentAudio) {
-      void state.currentAudio.play();
-    } else {
-      window.speechSynthesis.resume();
-    }
-    state.paused = false;
-  } else {
-    if (state.currentAudio) {
-      state.currentAudio.pause();
-    } else {
-      window.speechSynthesis.pause();
-    }
-    state.paused = true;
+    resumeCurrentPlayback();
+    return;
   }
+  if (state.currentAudio) {
+    state.currentAudio.pause();
+  } else {
+    window.speechSynthesis.pause();
+  }
+  state.paused = true;
   updateControls();
 });
 

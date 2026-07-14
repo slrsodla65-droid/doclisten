@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v6';
+const CACHE_NAME = 'doclisten-shell-v8';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

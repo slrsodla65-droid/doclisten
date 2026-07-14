@@ -16,6 +16,8 @@ import {
   getDailyUsageKey,
   createDailyUsageSnapshot,
   canStartListeningForPlan,
+  shouldRequireLoginBeforeUpload,
+  shouldResumeCurrentPlayback,
   prepareSpokenText,
   selectInitialListeningBlock,
 } from '../src/readerCore.mjs';
@@ -74,6 +76,28 @@ test('prepareSpokenText turns document prose into more natural Korean narration 
   assert.match(spoken, /그다음 베이직/);
   assert.match(spoken, /마지막으로 엔터프라이즈 플랜입니다/);
   assert.doesNotMatch(spoken, /설계는/);
+});
+
+test('prepareSpokenText cleans common PDF extraction spacing before narration', () => {
+  const spoken = prepareSpokenText('NoahAI 는 B 2 C 구독과 플 랜을 제공 한다 . PDF 문서다 .');
+  assert.match(spoken, /노아 에이아이/);
+  assert.match(spoken, /B2C/);
+  assert.match(spoken, /플랜/);
+  assert.match(spoken, /제공한다\./);
+  assert.match(spoken, /피디에프 문서다\./);
+  assert.doesNotMatch(spoken, /\s+[.,!?]/);
+});
+
+test('web upload requires login while the native app keeps login-free upload', () => {
+  assert.equal(shouldRequireLoginBeforeUpload({ isNativeApp: false, token: '' }), true);
+  assert.equal(shouldRequireLoginBeforeUpload({ isNativeApp: false, token: 'user-token' }), false);
+  assert.equal(shouldRequireLoginBeforeUpload({ isNativeApp: true, token: '' }), false);
+});
+
+test('listen control resumes an actively paused paragraph instead of consuming a new listen', () => {
+  assert.equal(shouldResumeCurrentPlayback({ speaking: true, paused: true }), true);
+  assert.equal(shouldResumeCurrentPlayback({ speaking: true, paused: false }), false);
+  assert.equal(shouldResumeCurrentPlayback({ speaking: false, paused: true }), false);
 });
 
 test('getNextBlock walks pages and block order when pages are already loaded', () => {
@@ -141,10 +165,13 @@ test('screen wake lock is needed only while actively listening', () => {
 test('upload control uses a real button and pdf extension fallback for mobile file pickers', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
 
   assert.match(html, /<button id="uploadBtn"[^>]*type="button"[^>]*>\s*PDF 업로드\s*<\/button>/);
   assert.match(html, /<input id="fileInput"[^>]*type="file"[^>]*accept="application\/pdf,\.pdf"/);
   assert.doesNotMatch(css, /\.upload-button input\s*\{\s*display:\s*none;\s*\}/);
+  assert.match(app, /shouldRequireLoginBeforeUpload/);
+  assert.match(app, /PDF 업로드 전에 먼저 Google로 로그인해주세요/);
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {
@@ -185,6 +212,8 @@ test('server audiobook mode declares production dependencies and fallback-safe p
   assert.match(app, /fallbackToBrowserSpeech/);
   assert.match(app, /audio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
   assert.match(app, /state\.currentAudio\.playbackRate = Number\(els\.rateSelect\.value \|\| 1\)/);
+  assert.match(app, /shouldResumeCurrentPlayback/);
+  assert.match(app, /text: prepareSpokenText\(block\.text\)/);
   assert.match(app, /prefetchNextNarration/);
   assert.match(app, /nextNarration/);
   assert.match(app, /narrationBlobFor/);
@@ -346,16 +375,23 @@ test('mobile app shell is configured and hides external purchase CTAs in native 
   const config = readFileSync(new URL('../capacitor.config.ts', import.meta.url), 'utf8');
   const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
   const styles = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  const androidBuild = readFileSync(new URL('../android/app/build.gradle', import.meta.url), 'utf8');
   const reviewNotes = readFileSync(new URL('../docs/app-store/review-notes-ko.md', import.meta.url), 'utf8');
 
   assert.match(pkg, /"@capacitor\/ios"/);
   assert.match(pkg, /"@capacitor\/android"/);
   assert.match(config, /appId: 'app\.doclisten\.mobile'/);
   assert.match(config, /url: 'https:\/\/doclisten\.app'/);
+  assert.match(androidBuild, /applicationId "com\.voxly\.studio"/);
+  assert.match(androidBuild, /versionCode 2/);
+  assert.match(androidBuild, /versionName "1\.0\.1"/);
   assert.match(app, /isNativeContainer/);
   assert.match(app, /applyNativeAppMode/);
   assert.match(app, /if \(state\.isNativeApp\) return/);
   assert.match(app, /앱에서는 로그인 없이 PDF 문단 듣기를 사용할 수 있습니다/);
+  assert.match(app, /section\[aria-label="회원 로그인"\]/);
+  assert.match(app, /PDF 업로드 → 무료 문단 듣기/);
+  assert.match(app, /실제로 듣고 싶은 PDF를 올려 문단별 음성과 화면 표시를 바로 테스트합니다/);
   assert.match(app, /if \(state\.isNativeApp && !state\.token\) \{/);
   assert.match(app, /window\.speechSynthesis\?\.cancel\(\)/);
   assert.match(app, /!window\.speechSynthesis\?\.speak/);
