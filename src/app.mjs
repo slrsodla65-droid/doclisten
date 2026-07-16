@@ -20,6 +20,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 const els = {
   fileInput: document.querySelector('#fileInput'),
   uploadBtn: document.querySelector('#uploadBtn'),
+  sampleDemoBtn: document.querySelector('#sampleDemoBtn'),
   emptyState: document.querySelector('#emptyState'),
   reader: document.querySelector('#reader'),
   player: document.querySelector('#player'),
@@ -77,6 +78,7 @@ const state = {
   currentAudioUrl: '',
   nextNarration: null,
   isNativeApp: isNativeContainer(),
+  demoMode: false,
 };
 
 const canvasContext = els.pdfCanvas.getContext('2d');
@@ -316,7 +318,7 @@ function updateUsageUi() {
     if (state.isNativeApp && !state.token) {
       els.usageLabel.textContent = '앱에서는 로그인 없이 PDF를 업로드하고 바로 들을 수 있습니다.';
     } else if (!state.token) {
-      els.usageLabel.textContent = `Google 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
+      els.usageLabel.textContent = `공개 샘플은 로그인 없이 확인할 수 있습니다. 개인 PDF는 Google 로그인 후 오늘 무료 듣기 ${usage.limit || FREE_DAILY_LISTEN_LIMIT}문단까지 사용할 수 있습니다.`;
     } else if (usage.plan === 'free') {
       els.usageLabel.textContent = `서버 저장 사용량: 오늘 ${usage.used}/${usage.limit}문단 사용 · 남은 ${usage.remaining}문단`;
     } else if (usage.plan === 'admin') {
@@ -333,6 +335,10 @@ function updateUsageUi() {
 
 async function consumeListeningCredit() {
   trackBetaEvent('listen_attempt');
+  if (state.demoMode) {
+    setAccountMessage('공개 샘플은 로그인 없이 재생할 수 있습니다. 개인 PDF 업로드는 Google 로그인이 필요합니다.');
+    return true;
+  }
   if (state.isNativeApp && !state.token) {
     setAccountMessage('앱에서는 로그인 없이 PDF 문단 듣기를 사용할 수 있습니다.');
     return true;
@@ -806,7 +812,7 @@ async function speakBlock(block) {
   }
 }
 
-async function loadPdf(file) {
+async function loadPdf(file, { demoMode = false } = {}) {
   stopSpeech();
   if (!file?.name?.toLowerCase().endsWith('.pdf') && file?.type !== 'application/pdf') {
     throw new Error('Only PDF files are supported');
@@ -815,6 +821,7 @@ async function loadPdf(file) {
     throw new Error('PDF file is too large for beta testing');
   }
   trackBetaEvent('pdf_upload');
+  state.demoMode = demoMode;
   state.fileName = file.name;
   state.pages.clear();
   state.nextNarration = null;
@@ -846,10 +853,29 @@ els.fileInput.addEventListener('change', async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   try {
-    await loadPdf(file);
+    await loadPdf(file, { demoMode: false });
   } catch (error) {
     console.error(error);
-    els.currentText.textContent = 'PDF를 불러오지 못했습니다. 30MB 이하의 텍스트형 PDF로 다시 시도해주세요. 계속 실패하면 카카오톡으로 PDF 종류와 기기 정보를 알려주세요.';
+    els.currentText.textContent = 'PDF를 불러오지 못했습니다. 30MB 이하의 텍스트형 PDF로 다시 시도해주세요. 계속 실패하면 문의 페이지로 PDF 종류와 기기 정보를 알려주세요.';
+  }
+});
+
+els.sampleDemoBtn?.addEventListener('click', async () => {
+  els.sampleDemoBtn.disabled = true;
+  setAccountMessage('자체 제작 샘플 PDF를 불러오는 중입니다.');
+  try {
+    const response = await fetch('/assets/demo/doclisten-review-sample.pdf', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Sample PDF request failed: ${response.status}`);
+    const blob = await response.blob();
+    const file = new File([blob], 'doclisten-review-sample.pdf', { type: 'application/pdf' });
+    await loadPdf(file, { demoMode: true });
+    setAccountMessage('공개 샘플이 열렸습니다. 문단을 누르거나 듣기 버튼으로 기능을 확인하세요.');
+    els.reader?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (error) {
+    console.error(error);
+    setAccountMessage('공개 샘플을 불러오지 못했습니다. 잠시 후 다시 시도하거나 테스트 기록을 확인해주세요.');
+  } finally {
+    els.sampleDemoBtn.disabled = false;
   }
 });
 

@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from server import build_oauth_authorize_url, concat_mp3, delete_user_account, extract_oauth_email, find_user_by_token, get_admin_metrics, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, make_silence_mp3, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_beta_event, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
+from server import PERMANENT_REDIRECTS, build_oauth_authorize_url, concat_mp3, delete_user_account, extract_oauth_email, find_user_by_token, get_admin_metrics, get_health_status, get_or_create_user, get_public_config, get_user_status, is_admin_email, make_silence_mp3, mark_user_paid_with_code, normalize_tts_pronunciation, oauth_provider_config, create_usage_snapshot, record_beta_event, record_listen_usage, revoke_user_token, safe_public_url, split_for_human_reading, split_multilingual_tts_segments, transform_to_reading_script
 
 
 def test_transform_to_reading_script_turns_plan_sentence_into_spoken_explanation():
@@ -112,6 +112,13 @@ def test_safe_public_url_accepts_https_only():
     assert safe_public_url("https://pay.example.com/doclisten") == "https://pay.example.com/doclisten"
     assert safe_public_url("http://pay.example.com/doclisten") == ""
     assert safe_public_url("javascript:alert(1)") == ""
+
+
+def test_thin_content_urls_permanently_map_to_cornerstone_guides():
+    assert PERMANENT_REDIRECTS["/pdf-audio-for-reports.html"] == "/research-paper-audio.html"
+    assert PERMANENT_REDIRECTS["/pdf-audio-speed-guide.html"] == "/pdf-tts-guide.html"
+    assert PERMANENT_REDIRECTS["/pdf-audio-troubleshooting.html"] == "/scanned-pdf-limitations.html"
+    assert len(PERMANENT_REDIRECTS) == 15
 
 
 def test_public_config_reads_payment_environment(monkeypatch):

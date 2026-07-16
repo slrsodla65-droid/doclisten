@@ -10,7 +10,12 @@
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://doclisten.app/" />
     <meta name="google-adsense-account" content="ca-pub-1136619051034273" />
-    <link rel="stylesheet" href="./src/styles.css?v=57" />
+    <meta property="og:title" content="DocListen | PDF를 귀로 듣는 웹앱" />
+    <meta property="og:description" content="직접 만든 공개 샘플로 PDF 페이지 표시, 문단 선택과 음성 재생을 로그인 없이 확인하세요." />
+    <meta property="og:url" content="https://doclisten.app/" />
+    <meta property="og:image" content="https://doclisten.app/assets/guides/doclisten-listening.png" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DocListen","applicationCategory":"EducationalApplication","operatingSystem":"Web, Android","url":"https://doclisten.app/","description":"권한이 있는 PDF를 페이지와 함께 보며 문단별로 듣는 비공개 테스트 단계의 웹·Android 앱","offers":{"@type":"Offer","price":"0","priceCurrency":"KRW"}}</script>
+    <link rel="stylesheet" href="./src/styles.css?v=58" />
 </head>
   <body>
     <main class="app-shell">
@@ -23,6 +28,7 @@
           <nav class="site-nav compact-nav" aria-label="주요 메뉴">
             <a href="#guide">사용가이드</a>
             <a href="./blog.html">PDF 듣기 가이드</a>
+            <a href="./doclisten-field-test.html">테스트 기록</a>
             <a href="./contact.html">문의</a>
           </nav>
           <div class="upload-control">
@@ -35,7 +41,7 @@
       <section class="usage-panel" aria-label="회원 및 무료 체험 사용량">
         <div>
           <strong id="planLabel">Free 체험</strong>
-          <p id="usageLabel">Google 로그인 후 오늘 무료 듣기 20문단까지 사용할 수 있습니다. 업로드 전 문서 이용 권한을 확인해주세요.</p>
+          <p id="usageLabel">공개 샘플은 로그인 없이 확인할 수 있습니다. 개인 PDF는 Google 로그인 후 오늘 무료 듣기 20문단까지 사용할 수 있습니다.</p>
         </div>
         <a class="mini-cta" href="./file-policy.html">파일 처리 확인</a>
       </section>
@@ -82,8 +88,13 @@
         <div class="empty-card">
           <h2>DocListen으로 PDF를 업로드하세요</h2>
           <p>직접 작성했거나 이용 허락을 받은 PDF의 원하는 문단을 누르거나, 듣기 버튼으로 현재 위치부터 들을 수 있습니다.</p>
+          <div class="demo-actions">
+            <button id="sampleDemoBtn" class="demo-button" type="button">로그인 없이 샘플 체험</button>
+            <a class="ghost-button" href="./doclisten-field-test.html">실제 테스트 기록 보기</a>
+          </div>
+          <p class="demo-note">자체 제작한 1페이지 샘플만 열립니다. 개인정보나 저작권 자료는 포함되어 있지 않습니다.</p>
           <ul>
-            <li>먼저 Google 로그인 → 무료 20문단 체험</li>
+            <li>공개 샘플은 로그인 없이, 개인 PDF는 Google 로그인 후 체험</li>
             <li>문단 터치 → 해당 문단부터 읽기</li>
             <li>개인 학습·업무 확인용 음성 → 문장 단위 휴지와 자연 낭독</li>
             <li>듣기 / 일시정지 / 이전 문단 / 다음 문단</li>
@@ -91,6 +102,18 @@
             <li>마지막 읽은 위치 저장</li>
           </ul>
         </div>
+      </section>
+
+      <section class="guide-section" aria-label="직접 테스트 증거">
+        <p class="eyebrow">Verified in closed testing</p>
+        <h2>실제 비공개 테스트 화면을 공개합니다.</h2>
+        <p>Android 비공개 테스트 빌드에서 자체 제작 PDF를 열어 페이지 표시, 문단 선택, 하이라이트와 재생 조작을 확인했습니다. 되는 범위와 아직 지원하지 않는 범위를 함께 기록했습니다.</p>
+        <div class="evidence-gallery">
+          <figure><img src="./assets/guides/doclisten-home.png" alt="DocListen Android 비공개 테스트 첫 화면" loading="lazy" /><figcaption>앱 첫 화면</figcaption></figure>
+          <figure><img src="./assets/guides/doclisten-pdf-loaded.png" alt="샘플 PDF가 로드되고 재생 조작부가 표시된 화면" loading="lazy" /><figcaption>샘플 PDF 로드</figcaption></figure>
+          <figure><img src="./assets/guides/doclisten-listening.png" alt="선택 문단이 초록색으로 표시된 실제 듣기 화면" loading="lazy" /><figcaption>문단 선택·하이라이트</figcaption></figure>
+        </div>
+        <div class="hero-actions"><a class="cta-button" href="./doclisten-field-test.html">검증 범위와 한계 자세히 보기</a></div>
       </section>
 
       <section id="guide" class="guide-section" aria-label="사용 가이드">
@@ -216,6 +239,7 @@
       <footer class="site-footer main-footer" aria-label="사이트 하단 링크">
         <a href="./about.html">서비스 소개</a>
         <a href="./blog.html">PDF 듣기 가이드</a>
+        <a href="./doclisten-field-test.html">직접 테스트 기록</a>
         <a href="./site-map.html">사이트맵</a>
         <a href="./privacy.html">개인정보처리방침</a>
         <a href="./file-policy.html">파일 처리 정책</a>
@@ -260,6 +284,6 @@
       </div>
     </footer>
 
-    <script type="module" src="./src/app.mjs?v=60"></script>
+    <script type="module" src="./src/app.mjs?v=61"></script>
   </body>
 </html>

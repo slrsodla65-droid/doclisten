@@ -201,6 +201,9 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   assert.doesNotMatch(css, /\.upload-button input\s*\{\s*display:\s*none;\s*\}/);
   assert.match(app, /shouldRequireLoginBeforeUpload/);
   assert.match(app, /PDF 업로드 전에 먼저 Google로 로그인해주세요/);
+  assert.match(html, /id="sampleDemoBtn"/);
+  assert.match(app, /assets\/demo\/doclisten-review-sample\.pdf/);
+  assert.match(app, /demoMode: true/);
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {
@@ -287,6 +290,7 @@ test('static policy pages disclose free access, rights, and deletion controls', 
 test('adsense-oriented public content pages are linked and substantive', () => {
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const blog = readFileSync(new URL('../blog.html', import.meta.url), 'utf8');
+  const fieldTest = readFileSync(new URL('../doclisten-field-test.html', import.meta.url), 'utf8');
   const guide = readFileSync(new URL('../pdf-tts-guide.html', import.meta.url), 'utf8');
   const commute = readFileSync(new URL('../listen-to-pdf-commute.html', import.meta.url), 'utf8');
   const paper = readFileSync(new URL('../research-paper-audio.html', import.meta.url), 'utf8');
@@ -310,20 +314,22 @@ test('adsense-oriented public content pages are linked and substantive', () => {
 
   assert.match(html, /PDF 듣기 가이드/);
   assert.match(html, /\.\/blog\.html/);
-  assert.match(blog, /PDF를 귀로 듣는 사람을 위한 실전 가이드/);
+  assert.match(blog, /직접 확인한 내용만 남긴 PDF 듣기 실전 가이드/);
+  assert.match(fieldTest, /실제 PDF 업로드부터 문단 듣기까지/);
+  assert.match(fieldTest, /doclisten-listening\.png/);
   assert.match(blog, /pdf-tts-guide\.html/);
-  assert.match(guide, /PDF TTS란/);
-  assert.match(commute, /출퇴근길 PDF 듣기/);
-  assert.match(paper, /논문 PDF를 효율적으로 듣는 방법/);
+  assert.match(guide, /PDF TTS를 제대로 쓰려면/);
+  assert.match(commute, /20분을 제대로 쓰는 실전 루틴/);
+  assert.match(paper, /논문과 보고서 PDF/);
   assert.match(compare, /PDF 읽어주는 앱 선택 기준/);
-  assert.match(scanned, /스캔 PDF가 잘 안 읽히는 이유/);
+  assert.match(scanned, /스캔 PDF와 복잡한 문서/);
   assert.match(study, /학습용 PDF를 음성으로 반복해서 듣는 방법/);
   assert.match(work, /업무 문서 PDF를 음성으로 복습하는 방법/);
-  assert.match(ebook, /전자책 PDF를 음성으로 들을 때 확인할 점/);
+  assert.match(ebook, /전자책과 유료 PDF/);
   assert.match(privacyGuide, /개인정보 체크리스트/);
   assert.match(faq, /PDF TTS 자주 묻는 질문/);
   assert.match(checklist, /PDF를 듣기 전에 확인할 체크리스트/);
-  assert.match(about, /DocListen은 긴 PDF를 귀로 듣기 위한 웹앱입니다/);
+  assert.match(about, /Google Play 비공개 테스트/);
   assert.match(siteMap, /DocListen 사이트맵/);
   assert.match(editorial, /콘텐츠 편집 원칙/);
   assert.match(accessibility, /접근성 안내/);
@@ -331,16 +337,18 @@ test('adsense-oriented public content pages are linked and substantive', () => {
   assert.match(mobileGuide, /모바일에서 PDF를 음성으로 듣는 방법/);
   assert.match(troubleshooting, /PDF 음성이 안 나올 때 확인할 것/);
   assert.ok(guide.replace(/<[^>]+>/g, ' ').length > 900);
-  assert.ok(blog.match(/class="article-list"/));
+  assert.ok(blog.match(/article-list/));
   assert.match(robots, /Sitemap: https:\/\/doclisten\.app\/sitemap\.xml/);
-  assert.match(sitemap, /pdf-audio-app-comparison\.html/);
-  assert.match(sitemap, /pdf-listening-checklist\.html/);
+  assert.match(sitemap, /doclisten-field-test\.html/);
+  assert.doesNotMatch(sitemap, /pdf-audio-app-comparison\.html/);
+  assert.doesNotMatch(sitemap, /pdf-listening-checklist\.html/);
   assert.match(sitemap, /editorial-policy\.html/);
-  assert.match(sitemap, /pdf-audio-for-reports\.html/);
+  assert.doesNotMatch(sitemap, /pdf-audio-for-reports\.html/);
   assert.match(sitemap, /acceptable-use\.html/);
   assert.match(sitemap, /delete-account\.html/);
   assert.doesNotMatch(sitemap, /beta-launch\.html/);
-  assert.match(blog, /작성\/검토: DocListen 운영팀/);
+  assert.match(blog, /작성·검토: DocListen 운영팀/);
+  assert.ok(fieldTest.replace(/<[^>]+>/g, ' ').length > 1500);
 });
 
 
@@ -448,9 +456,10 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /beta-launch\.html/);
   assert.match(serviceWorker, /blog\.html/);
   assert.match(serviceWorker, /pdf-tts-guide\.html/);
-  assert.match(serviceWorker, /pdf-tts-faq\.html/);
+  assert.match(serviceWorker, /doclisten-field-test\.html/);
+  assert.match(serviceWorker, /doclisten-review-sample\.pdf/);
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
-  assert.match(serviceWorker, /pdf-audio-mobile-guide\.html/);
+  assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
   assert.match(serviceWorker, /delete-account\.html/);
 });

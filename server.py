@@ -63,6 +63,23 @@ METRICS_LOCK = threading.Lock()
 OAUTH_STATE_LOCK = threading.Lock()
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 DEFAULT_ADMIN_EMAILS = {"gkrwodl3@gmail.com"}
+PERMANENT_REDIRECTS = {
+    "/pdf-audio-app-comparison.html": "/scanned-pdf-limitations.html",
+    "/study-with-pdf-audio.html": "/listen-to-pdf-commute.html",
+    "/work-document-audio.html": "/research-paper-audio.html",
+    "/pdf-audio-privacy.html": "/privacy.html",
+    "/pdf-tts-faq.html": "/pdf-tts-guide.html",
+    "/audio-reading-vs-summary.html": "/pdf-tts-guide.html",
+    "/pdf-listening-checklist.html": "/pdf-tts-guide.html",
+    "/pdf-audio-for-language-learning.html": "/listen-to-pdf-commute.html",
+    "/pdf-audio-for-low-vision.html": "/listen-to-pdf-commute.html",
+    "/pdf-audio-speed-guide.html": "/pdf-tts-guide.html",
+    "/pdf-audio-note-taking.html": "/listen-to-pdf-commute.html",
+    "/pdf-audio-mobile-guide.html": "/pdf-tts-guide.html",
+    "/pdf-audio-troubleshooting.html": "/scanned-pdf-limitations.html",
+    "/pdf-audio-for-teachers.html": "/research-paper-audio.html",
+    "/pdf-audio-for-reports.html": "/research-paper-audio.html",
+}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -80,6 +97,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if path in PERMANENT_REDIRECTS:
+            return self.send_permanent_redirect(PERMANENT_REDIRECTS[path])
         if path == "/api/voices":
             return self.send_json({"voices": KOREAN_VOICES})
         if path == "/api/config":
@@ -176,6 +195,12 @@ class Handler(SimpleHTTPRequestHandler):
     def send_redirect(self, location: str):
         self.send_response(302)
         self.send_header("Location", location)
+        self.end_headers()
+
+    def send_permanent_redirect(self, location: str):
+        self.send_response(301)
+        self.send_header("Location", location)
+        self.send_header("Cache-Control", "public, max-age=86400")
         self.end_headers()
 
 
