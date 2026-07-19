@@ -443,6 +443,8 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   const adminScript = readFileSync(new URL('../src/admin.mjs', import.meta.url), 'utf8');
   const manifest = readFileSync(new URL('../manifest.webmanifest', import.meta.url), 'utf8');
   const serviceWorker = readFileSync(new URL('../service-worker.js', import.meta.url), 'utf8');
+  const appScript = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+  const server = readFileSync(new URL('../server.py', import.meta.url), 'utf8');
 
   assert.match(admin, /베타 전환 현황/);
   assert.match(admin, /todayMetrics/);
@@ -461,5 +463,10 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
+  assert.match(serviceWorker, /doclisten-shell-v12/);
   assert.match(serviceWorker, /delete-account\.html/);
+  assert.match(appScript, /updateViaCache: 'none'/);
+  assert.match(appScript, /registration\.update\(\)/);
+  assert.match(server, /service-worker\.js/);
+  assert.match(server, /no-cache, no-store, must-revalidate/);
 });

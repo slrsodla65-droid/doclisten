@@ -973,7 +973,10 @@ void initializeAdMob().catch((error) => {
 });
 trackBetaEvent('page_view');
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js').catch((error) => console.debug('Service worker registration failed', error));
+  navigator.serviceWorker
+    .register('/service-worker.js', { updateViaCache: 'none' })
+    .then((registration) => registration.update())
+    .catch((error) => console.debug('Service worker registration failed', error));
 }
 void loadPaymentConfig();
 void refreshAccountStatus();
