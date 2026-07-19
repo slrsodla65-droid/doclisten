@@ -463,7 +463,9 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
-  assert.match(serviceWorker, /doclisten-shell-v12/);
+  assert.match(serviceWorker, /doclisten-shell-v13/);
+  assert.match(serviceWorker, /fetch\(asset, \{ cache: 'reload' \}\)/);
+  assert.match(serviceWorker, /event\.request\.mode === 'navigate'/);
   assert.match(serviceWorker, /delete-account\.html/);
   assert.match(appScript, /updateViaCache: 'none'/);
   assert.match(appScript, /registration\.update\(\)/);

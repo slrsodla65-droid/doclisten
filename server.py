@@ -89,8 +89,9 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "content-type")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        if urlparse(self.path).path == "/service-worker.js":
+        if urlparse(self.path).path in {"/", "/index.html", "/service-worker.js"}:
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        if urlparse(self.path).path == "/service-worker.js":
             self.send_header("Service-Worker-Allowed", "/")
         super().end_headers()
 

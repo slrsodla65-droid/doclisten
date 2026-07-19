@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v12';
+const CACHE_NAME = 'doclisten-shell-v13';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -30,7 +30,19 @@ const SHELL_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS)).catch(() => undefined));
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        Promise.all(
+          SHELL_ASSETS.map(async (asset) => {
+            const response = await fetch(asset, { cache: 'reload' });
+            if (response.ok) await cache.put(asset, response);
+          }),
+        ),
+      )
+      .catch(() => undefined),
+  );
   self.skipWaiting();
 });
 
@@ -46,8 +58,10 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin) return;
   if (url.pathname.startsWith('/api/')) return;
   if (event.request.method !== 'GET') return;
+  const networkRequest =
+    event.request.mode === 'navigate' ? new Request(event.request, { cache: 'reload' }) : event.request;
   event.respondWith(
-    fetch(event.request)
+    fetch(networkRequest)
       .then((response) => {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
