@@ -431,8 +431,8 @@ test('mobile app shell is configured and hides external purchase CTAs in native 
   assert.match(config, /appId: 'app\.doclisten\.mobile'/);
   assert.match(config, /url: 'https:\/\/doclisten\.app'/);
   assert.match(androidBuild, /applicationId "com\.voxly\.studio"/);
-  assert.match(androidBuild, /versionCode 2/);
-  assert.match(androidBuild, /versionName "1\.0\.1"/);
+  assert.match(androidBuild, /versionCode 3/);
+  assert.match(androidBuild, /versionName "1\.0\.2"/);
   assert.match(app, /isNativeContainer/);
   assert.match(app, /applyNativeAppMode/);
   assert.match(app, /if \(state\.isNativeApp\) return/);
