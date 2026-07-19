@@ -4,4 +4,5 @@
     <string name="title_activity_main">DocListen</string>
     <string name="package_name">app.doclisten.mobile</string>
     <string name="custom_url_scheme">app.doclisten.mobile</string>
+    <string name="admob_app_id">ca-app-pub-7652401058948200~7132116601</string>
 </resources>

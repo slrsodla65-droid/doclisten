@@ -14,6 +14,7 @@ import {
   prepareSpokenText,
   selectInitialListeningBlock,
 } from './readerCore.mjs?v=38';
+import { initializeAdMob } from './admob.mjs?v=1';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
@@ -967,6 +968,9 @@ window.addEventListener('beforeunload', () => {
 });
 
 applyNativeAppMode();
+void initializeAdMob().catch((error) => {
+  console.debug('AdMob initialization skipped', error);
+});
 trackBetaEvent('page_view');
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/service-worker.js').catch((error) => console.debug('Service worker registration failed', error));

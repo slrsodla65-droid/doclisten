@@ -25,5 +25,8 @@
     "appId": "app.doclisten.mobile",
     "appName": "DocListen",
     "webDir": "mobile-shell"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^8.0.0"
   }
 }
