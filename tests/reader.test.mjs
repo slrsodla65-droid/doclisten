@@ -207,6 +207,9 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   assert.match(app, /import \* as pdfjsLib from '\.\.\/assets\/vendor\/pdfjs\/pdf\.min\.mjs'/);
   assert.match(app, /workerSrc = '\/assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs'/);
   assert.match(app, /PDF worker did not respond within 15 seconds/);
+  assert.match(app, /standardFontDataUrl: PDF_STANDARD_FONT_URL/);
+  assert.match(app, /useSystemFonts: false/);
+  assert.match(app, /PDF page render did not respond within 15 seconds/);
   assert.doesNotMatch(app, /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js/);
 });
 
@@ -467,9 +470,11 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
-  assert.match(serviceWorker, /doclisten-shell-v14/);
+  assert.match(serviceWorker, /doclisten-shell-v15/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.min\.mjs/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs/);
+  assert.match(serviceWorker, /standard_fonts\/FoxitFixed\.pfb/);
+  assert.match(serviceWorker, /standard_fonts\/LiberationSans-Regular\.ttf/);
   assert.match(serviceWorker, /fetch\(asset, \{ cache: 'reload' \}\)/);
   assert.match(serviceWorker, /event\.request\.mode === 'navigate'/);
   assert.match(serviceWorker, /delete-account\.html/);

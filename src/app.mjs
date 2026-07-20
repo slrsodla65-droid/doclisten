@@ -19,6 +19,8 @@ import { initializeAdMob } from './admob.mjs?v=1';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/pdf.worker.min.mjs';
 
 const PDF_LOAD_TIMEOUT_MS = 15000;
+const PDF_RENDER_TIMEOUT_MS = 15000;
+const PDF_STANDARD_FONT_URL = '/assets/vendor/pdfjs/standard_fonts/';
 
 const els = {
   fileInput: document.querySelector('#fileInput'),
@@ -620,7 +622,24 @@ async function renderPage(pageNumber, preferredBlockId = null) {
   els.textOverlay.style.height = `${viewport.height}px`;
   els.textOverlay.innerHTML = '';
 
-  await page.render({ canvasContext, viewport, transform: renderMetrics.transform }).promise;
+  const renderTask = page.render({ canvasContext, viewport, transform: renderMetrics.transform });
+  let renderTimeoutId;
+  try {
+    await Promise.race([
+      renderTask.promise,
+      new Promise((_, reject) => {
+        renderTimeoutId = window.setTimeout(
+          () => reject(new Error('PDF page render did not respond within 15 seconds')),
+          PDF_RENDER_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (error) {
+    renderTask.cancel();
+    throw error;
+  } finally {
+    window.clearTimeout(renderTimeoutId);
+  }
   const textContent = await page.getTextContent();
   const blocks = buildBlocks(textContent.items, viewport, state.currentPage);
   state.pages.set(state.currentPage, blocks);
@@ -834,7 +853,11 @@ async function loadPdf(file, { demoMode = false } = {}) {
   showReader();
 
   const buffer = await file.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: buffer });
+  const loadingTask = pdfjsLib.getDocument({
+    data: buffer,
+    standardFontDataUrl: PDF_STANDARD_FONT_URL,
+    useSystemFonts: false,
+  });
   let timeoutId;
   try {
     state.pdf = await Promise.race([

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v14';
+const CACHE_NAME = 'doclisten-shell-v15';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -8,6 +8,20 @@ const SHELL_ASSETS = [
   '/assets/demo/doclisten-review-sample.pdf',
   '/assets/vendor/pdfjs/pdf.min.mjs',
   '/assets/vendor/pdfjs/pdf.worker.min.mjs',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitDingbats.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitFixed.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitFixedBold.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitFixedBoldItalic.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitFixedItalic.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitSerif.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitSerifBold.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitSerifBoldItalic.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitSerifItalic.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/FoxitSymbol.pfb',
+  '/assets/vendor/pdfjs/standard_fonts/LiberationSans-Bold.ttf',
+  '/assets/vendor/pdfjs/standard_fonts/LiberationSans-BoldItalic.ttf',
+  '/assets/vendor/pdfjs/standard_fonts/LiberationSans-Italic.ttf',
+  '/assets/vendor/pdfjs/standard_fonts/LiberationSans-Regular.ttf',
   '/assets/guides/doclisten-home.png',
   '/assets/guides/doclisten-pdf-loaded.png',
   '/assets/guides/doclisten-listening.png',
