@@ -204,6 +204,10 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   assert.match(html, /id="sampleDemoBtn"/);
   assert.match(app, /assets\/demo\/doclisten-review-sample\.pdf/);
   assert.match(app, /demoMode: true/);
+  assert.match(app, /import \* as pdfjsLib from '\.\.\/assets\/vendor\/pdfjs\/pdf\.min\.mjs'/);
+  assert.match(app, /workerSrc = '\/assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs'/);
+  assert.match(app, /PDF worker did not respond within 15 seconds/);
+  assert.doesNotMatch(app, /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js/);
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {
@@ -463,7 +467,9 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
-  assert.match(serviceWorker, /doclisten-shell-v13/);
+  assert.match(serviceWorker, /doclisten-shell-v14/);
+  assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.min\.mjs/);
+  assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs/);
   assert.match(serviceWorker, /fetch\(asset, \{ cache: 'reload' \}\)/);
   assert.match(serviceWorker, /event\.request\.mode === 'navigate'/);
   assert.match(serviceWorker, /delete-account\.html/);

@@ -1,4 +1,4 @@
-import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+import * as pdfjsLib from '../assets/vendor/pdfjs/pdf.min.mjs';
 import {
   AUTO_SCROLL_USER_PAUSE_MS,
   shouldAutoScrollReading,
@@ -16,7 +16,9 @@ import {
 } from './readerCore.mjs?v=38';
 import { initializeAdMob } from './admob.mjs?v=1';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/pdf.worker.min.mjs';
+
+const PDF_LOAD_TIMEOUT_MS = 15000;
 
 const els = {
   fileInput: document.querySelector('#fileInput'),
@@ -832,7 +834,24 @@ async function loadPdf(file, { demoMode = false } = {}) {
   showReader();
 
   const buffer = await file.arrayBuffer();
-  state.pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const loadingTask = pdfjsLib.getDocument({ data: buffer });
+  let timeoutId;
+  try {
+    state.pdf = await Promise.race([
+      loadingTask.promise,
+      new Promise((_, reject) => {
+        timeoutId = window.setTimeout(
+          () => reject(new Error('PDF worker did not respond within 15 seconds')),
+          PDF_LOAD_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } catch (error) {
+    void loadingTask.destroy().catch(() => undefined);
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
   const saved = loadProgress();
   await renderPage(saved?.page || 1, saved?.blockId || null);
   els.currentText.textContent = state.activeBlock?.text || '듣기 버튼을 누르거나 문단을 터치하세요.';
