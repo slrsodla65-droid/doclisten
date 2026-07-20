@@ -210,7 +210,9 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   assert.match(app, /PDF worker did not respond within 15 seconds/);
   assert.match(app, /standardFontDataUrl: PDF_STANDARD_FONT_URL/);
   assert.match(app, /useSystemFonts: false/);
-  assert.match(app, /PDF page render did not respond within 15 seconds/);
+  assert.match(app, /PDF page render did not respond within 5 seconds/);
+  assert.match(app, /drawTextRenderFallback/);
+  assert.match(app, /dataset\.renderMode = 'text-fallback'/);
   assert.doesNotMatch(app, /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js/);
   assert.equal(pdfjsVersion, '6.1.200');
 });
@@ -472,7 +474,7 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
-  assert.match(serviceWorker, /doclisten-shell-v16/);
+  assert.match(serviceWorker, /doclisten-shell-v17/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/VERSION/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.min\.mjs/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs/);

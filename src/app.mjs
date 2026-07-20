@@ -19,7 +19,7 @@ import { initializeAdMob } from './admob.mjs?v=1';
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/pdf.worker.min.mjs';
 
 const PDF_LOAD_TIMEOUT_MS = 15000;
-const PDF_RENDER_TIMEOUT_MS = 15000;
+const PDF_RENDER_TIMEOUT_MS = 5000;
 const PDF_STANDARD_FONT_URL = '/assets/vendor/pdfjs/standard_fonts/';
 
 const els = {
@@ -602,6 +602,24 @@ function setActiveBlock(block, options = {}) {
   updateControls();
 }
 
+function drawTextRenderFallback(blocks, viewport, outputScale) {
+  const scale = Math.max(1, Number(outputScale) || 1);
+  canvasContext.save();
+  canvasContext.setTransform(scale, 0, 0, scale, 0, 0);
+  canvasContext.fillStyle = '#ffffff';
+  canvasContext.fillRect(0, 0, viewport.width, viewport.height);
+  canvasContext.fillStyle = '#18233a';
+  canvasContext.textBaseline = 'top';
+  for (const block of blocks) {
+    const fontSize = Math.max(10, Math.min(20, block.bbox.height * 0.82));
+    const maxWidth = Math.max(40, viewport.width - block.bbox.x - 24);
+    canvasContext.font = `${fontSize}px sans-serif`;
+    canvasContext.fillText(block.text, block.bbox.x, block.bbox.y, maxWidth);
+  }
+  canvasContext.restore();
+  els.pdfCanvas.dataset.renderMode = 'text-fallback';
+}
+
 async function renderPage(pageNumber, preferredBlockId = null) {
   if (!state.pdf) return;
   const token = ++state.renderToken;
@@ -621,6 +639,11 @@ async function renderPage(pageNumber, preferredBlockId = null) {
   els.textOverlay.style.width = `${viewport.width}px`;
   els.textOverlay.style.height = `${viewport.height}px`;
   els.textOverlay.innerHTML = '';
+  els.pdfCanvas.dataset.renderMode = 'pdf';
+
+  const textContent = await page.getTextContent();
+  const blocks = buildBlocks(textContent.items, viewport, state.currentPage);
+  state.pages.set(state.currentPage, blocks);
 
   const renderTask = page.render({ canvasContext, viewport, transform: renderMetrics.transform });
   let renderTimeoutId;
@@ -629,20 +652,19 @@ async function renderPage(pageNumber, preferredBlockId = null) {
       renderTask.promise,
       new Promise((_, reject) => {
         renderTimeoutId = window.setTimeout(
-          () => reject(new Error('PDF page render did not respond within 15 seconds')),
+          () => reject(new Error('PDF page render did not respond within 5 seconds')),
           PDF_RENDER_TIMEOUT_MS,
         );
       }),
     ]);
   } catch (error) {
     renderTask.cancel();
-    throw error;
+    if (error?.message !== 'PDF page render did not respond within 5 seconds') throw error;
+    console.warn('PDF canvas rendering timed out; using text fallback');
+    drawTextRenderFallback(blocks, viewport, renderMetrics.outputScale);
   } finally {
     window.clearTimeout(renderTimeoutId);
   }
-  const textContent = await page.getTextContent();
-  const blocks = buildBlocks(textContent.items, viewport, state.currentPage);
-  state.pages.set(state.currentPage, blocks);
 
   for (const block of blocks) {
     const div = document.createElement('button');
