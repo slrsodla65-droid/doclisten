@@ -195,6 +195,7 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
   const app = readFileSync(new URL('../src/app.mjs', import.meta.url), 'utf8');
+  const pdfjsVersion = readFileSync(new URL('../assets/vendor/pdfjs/VERSION', import.meta.url), 'utf8').trim();
 
   assert.match(html, /<button id="uploadBtn"[^>]*type="button"[^>]*>\s*PDF 업로드\s*<\/button>/);
   assert.match(html, /<input id="fileInput"[^>]*type="file"[^>]*accept="application\/pdf,\.pdf"/);
@@ -211,6 +212,7 @@ test('upload control uses a real button and pdf extension fallback for mobile fi
   assert.match(app, /useSystemFonts: false/);
   assert.match(app, /PDF page render did not respond within 15 seconds/);
   assert.doesNotMatch(app, /cdnjs\.cloudflare\.com\/ajax\/libs\/pdf\.js/);
+  assert.equal(pdfjsVersion, '6.1.200');
 });
 
 test('rate select offers granular speeds from 0.5x to 2.0x', () => {
@@ -470,7 +472,8 @@ test('admin dashboard and PWA assets are present for launch operations', () => {
   assert.match(serviceWorker, /about\.html/);
   assert.match(serviceWorker, /editorial-policy\.html/);
   assert.doesNotMatch(serviceWorker, /pdf-audio-mobile-guide\.html/);
-  assert.match(serviceWorker, /doclisten-shell-v15/);
+  assert.match(serviceWorker, /doclisten-shell-v16/);
+  assert.match(serviceWorker, /assets\/vendor\/pdfjs\/VERSION/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.min\.mjs/);
   assert.match(serviceWorker, /assets\/vendor\/pdfjs\/pdf\.worker\.min\.mjs/);
   assert.match(serviceWorker, /standard_fonts\/FoxitFixed\.pfb/);

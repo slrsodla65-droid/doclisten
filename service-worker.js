@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doclisten-shell-v15';
+const CACHE_NAME = 'doclisten-shell-v16';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/assets/icon.svg',
   '/assets/demo/doclisten-review-sample.pdf',
+  '/assets/vendor/pdfjs/VERSION',
   '/assets/vendor/pdfjs/pdf.min.mjs',
   '/assets/vendor/pdfjs/pdf.worker.min.mjs',
   '/assets/vendor/pdfjs/standard_fonts/FoxitDingbats.pfb',
