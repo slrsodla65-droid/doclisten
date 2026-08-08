@@ -13,8 +13,8 @@ import {
   getPdfRenderMetrics,
   prepareSpokenText,
   selectInitialListeningBlock,
-} from './readerCore.mjs?v=38';
-import { initializeAdMob } from './admob.mjs?v=1';
+} from './readerCore.mjs?v=39';
+import { initializeAdMob } from './admob.mjs?v=2';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/pdf.worker.min.mjs';
 
@@ -893,6 +893,10 @@ async function loadPdf(file, { demoMode = false } = {}) {
     ]);
   } catch (error) {
     void loadingTask.destroy().catch(() => undefined);
+    state.pdf = null;
+    state.activeBlock = null;
+    state.pages.clear();
+    updateControls();
     throw error;
   } finally {
     window.clearTimeout(timeoutId);
@@ -921,6 +925,9 @@ els.fileInput.addEventListener('change', async (event) => {
     await loadPdf(file, { demoMode: false });
   } catch (error) {
     console.error(error);
+    state.pdf = null;
+    state.activeBlock = null;
+    updateControls();
     els.currentText.textContent = 'PDF를 불러오지 못했습니다. 30MB 이하의 텍스트형 PDF로 다시 시도해주세요. 계속 실패하면 문의 페이지로 PDF 종류와 기기 정보를 알려주세요.';
   }
 });
@@ -938,6 +945,10 @@ els.sampleDemoBtn?.addEventListener('click', async () => {
     els.reader?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (error) {
     console.error(error);
+    state.pdf = null;
+    state.activeBlock = null;
+    updateControls();
+    els.currentText.textContent = '공개 샘플을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.';
     setAccountMessage('공개 샘플을 불러오지 못했습니다. 잠시 후 다시 시도하거나 테스트 기록을 확인해주세요.');
   } finally {
     els.sampleDemoBtn.disabled = false;
