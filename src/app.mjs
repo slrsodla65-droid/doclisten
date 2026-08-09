@@ -96,21 +96,16 @@ function applyNativeAppMode() {
     node.tabIndex = -1;
   });
   if (els.accountMessage) {
-    els.accountMessage.textContent = '앱에서는 로그인 없이 PDF 업로드와 문단별 듣기 기능을 제공합니다.';
+    els.accountMessage.textContent = '앱에서는 로그인 없이 PDF를 듣고 문단을 선택할 수 있습니다.';
   }
   document.querySelector('section[aria-label="회원 로그인"]')?.classList.add('hidden');
-  const firstEmptyStateStep = document.querySelector('#emptyState li');
-  if (firstEmptyStateStep) {
-    firstEmptyStateStep.textContent = 'PDF 업로드 → 무료 문단 듣기';
-  }
-  const firstQuickStartText = document.querySelector('#guide .guide-grid article:first-child p');
-  if (firstQuickStartText) {
-    firstQuickStartText.textContent = '실제로 듣고 싶은 PDF를 올려 문단별 음성과 화면 표시를 바로 테스트합니다.';
-  }
-  const installPanelText = document.querySelector('.install-panel p');
-  if (installPanelText) {
-    installPanelText.textContent = '현재 실행 중인 앱에서 PDF를 업로드하고 문단별로 들을 수 있습니다.';
-  }
+  const title = document.querySelector('.topbar h1');
+  if (title) title.textContent = 'PDF 듣기';
+  const emptyTitle = document.querySelector('#emptyState h2');
+  if (emptyTitle) emptyTitle.textContent = 'PDF를 열고 들으세요';
+  const emptyLead = document.querySelector('#emptyState .empty-card > p');
+  if (emptyLead) emptyLead.textContent = '파일을 올리거나 샘플로 바로 확인할 수 있습니다.';
+  if (els.sampleDemoBtn) els.sampleDemoBtn.textContent = '샘플 체험';
   const paywallText = els.paywallNotice?.querySelector('p');
   if (paywallText) {
     paywallText.textContent = '오늘 무료 사용량을 모두 사용했습니다. 사용량은 다음 날 자동으로 초기화됩니다.';
