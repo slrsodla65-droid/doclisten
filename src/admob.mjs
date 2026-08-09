@@ -2,7 +2,7 @@ import {
   ADMOB_LIVE_BANNER_ID,
   ADMOB_TEST_BANNER_ID,
   ADMOB_USE_TEST_ADS,
-} from './admobConfig.mjs?v=1';
+} from './admobConfig.mjs?v=3';
 import {
   isPrivacyOptionsRequired,
   normalizeBannerHeight,

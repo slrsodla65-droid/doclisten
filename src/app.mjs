@@ -14,7 +14,7 @@ import {
   prepareSpokenText,
   selectInitialListeningBlock,
 } from './readerCore.mjs?v=39';
-import { initializeAdMob } from './admob.mjs?v=2';
+import { initializeAdMob } from './admob.mjs?v=3';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/pdf.worker.min.mjs';
 
