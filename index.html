@@ -247,6 +247,7 @@
         <a href="./terms.html">이용약관</a>
         <a href="./editorial-policy.html">편집 원칙</a>
         <a href="./contact.html">문의</a>
+        <a href="mailto:slrsodla65@gmail.com">문의 이메일</a>
         <button id="adPrivacyOptionsBtn" class="ad-privacy-options hidden" type="button">광고 개인정보 설정</button>
       </footer>
     </main>
@@ -280,6 +281,23 @@
             <option value="1.8">1.8x</option>
             <option value="1.9">1.9x</option>
             <option value="2.0">2.0x</option>
+          </select>
+        </label>
+        <label class="rate-control voice-control">
+          음성
+          <select id="voiceSelect" aria-label="낭독 음성">
+            <option value="gtts-ko-human">Google 자연 낭독</option>
+          </select>
+        </label>
+        <label class="rate-control gap-control">
+          문단 간격
+          <select id="gapSelect" aria-label="다음 문단 대기시간">
+            <option value="0">바로</option>
+            <option value="0.5">0.5초</option>
+            <option value="1">1초</option>
+            <option value="2">2초</option>
+            <option value="3">3초</option>
+            <option value="5">5초</option>
           </select>
         </label>
       </div>

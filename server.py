@@ -81,6 +81,20 @@ PERMANENT_REDIRECTS = {
     "/pdf-audio-for-reports.html": "/research-paper-audio.html",
 }
 
+# Extensionless legal/content URLs so Play/AdMob reviewers never hit 404.
+EXTENSIONLESS_STATIC_PAGES = {
+    "/privacy": "/privacy.html",
+    "/terms": "/terms.html",
+    "/contact": "/contact.html",
+    "/delete-account": "/delete-account.html",
+    "/acceptable-use": "/acceptable-use.html",
+    "/file-policy": "/file-policy.html",
+    "/about": "/about.html",
+    "/blog": "/blog.html",
+    "/accessibility": "/accessibility.html",
+    "/editorial-policy": "/editorial-policy.html",
+}
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
@@ -100,9 +114,14 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path = parsed.path
         if path in PERMANENT_REDIRECTS:
             return self.send_permanent_redirect(PERMANENT_REDIRECTS[path])
+        if path in EXTENSIONLESS_STATIC_PAGES:
+            target = EXTENSIONLESS_STATIC_PAGES[path]
+            self.path = target + (f"?{parsed.query}" if parsed.query else "")
+            path = target
         if path == "/api/voices":
             return self.send_json({"voices": KOREAN_VOICES})
         if path == "/api/config":
